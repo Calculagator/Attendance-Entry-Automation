@@ -191,7 +191,7 @@ window.mainloop()
 #                               datefmt="%Y-%m-%d %H:%M:%S")
 # file_handler.setFormatter(formatter)
 # logger.addHandler(file_handler)
-logging.basicConfig(level=logging.INFO, filename=f"logs/" + f"{wb.title}.log".replace('/', '.'), filemode='w',
+logging.basicConfig(level=logging.INFO, filename=f"logs/" + f"{wb.title} _ {sheet_window.ws}.log".replace('/', '.'), filemode='w',
                     format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 
