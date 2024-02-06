@@ -135,6 +135,18 @@ def estimate_completion_time():
         sys.exit()
 
 
+def record_feedback(message, current_row):
+    """Writes message parameter in 'entered?' column."""
+    ws.update_cell(current_row + 2, ENTERED_COLUMN, f'{message}')
+
+
+def process_completed_check():
+    """Displays yes/no box with end time and copied file name. Asks if user would like to open the copied file.
+     If yes, opens file."""
+    finished_time = datetime.now().strftime("%H:%M")
+    logging.info(f"Attendance entry complete | Started - {starting_time} | Finished - {finished_time}")
+
+
 # Opens Welcome Window: user selects attendance type, file, copied file name & enters login info
 window = CTk()
 customtkinter.set_appearance_mode("dark")
@@ -162,8 +174,6 @@ wb_id = re.split('/edit', text_blob)[0]
 wb = client.open_by_key(wb_id)
 
 tabs = list(map(lambda x: x.title, wb.worksheets()))
-print(tabs)
-print(wb.title)
 
 # Opens Select Sheet Window; user selects sheet to use within the spreadsheet
 window = CTk()
@@ -199,3 +209,156 @@ logging.info(f"\n\n~ {WelcWin.attend_type} Entry ~\n"
              f"File chosen: {wb.title}\n")
 starting_time = datetime.now().strftime("%H:%M")
 
+
+val = ws.cell(1, 2).value
+print(val)
+
+
+def run(playwright: Playwright) -> None:
+    browser = playwright.chromium.launch(headless=False, args=["--start-maximized"])
+    context = browser.new_context(no_viewport=True)
+    page = context.new_page()
+
+    load_dotenv(override=True)
+    USERNAME = os.getenv("USERNAME")
+    PASSWORD = os.getenv("PASSWORD")
+
+    page.goto("https://kaers.ky.gov/SignIn.aspx")
+    page.locator("#rtxtUserName").click()
+    page.locator("#rtxtUserName").fill(USERNAME)
+    page.locator("#rtxtPassword").click()
+    page.locator("#rtxtPassword").fill(PASSWORD)
+    page.get_by_role("button", name="Sign in").click()
+    time.sleep(8)
+
+    if WelcWin.row_start:
+        current_row = WelcWin.row_start - 1
+    else:
+        current_row = 0
+
+    separated_list = []
+
+    for column in df['Row ID'].tolist():
+
+        try:
+            #TODO: catch when session expires
+            # if "Session Expired" in url:
+                #log "Session expired"
+                #input("Session has expired. Please log into KAERS again and then push enter: ")
+
+            
+            if pd.isna(df['KAERS ID'][current_row]):
+                if pd.isna(df['First Name'][current_row]) and pd.isna(df['Last Name'][current_row]):
+                        logging.info(f'Blank row found. Program stopped. Row {current_row}\n')
+                        break
+                else:
+                    logging.warning(f"Blank ID: Row {current_row + 1}")
+                    record_feedback(message='Blank ID', current_row=current_row)
+                    continue
+
+            if WelcWin.attend_type == "Distance Learning":
+                if df['Total Time'][current_row] == 0:
+                    logging.info(f"Skipped (time = 0): Row {current_row + 1}")
+                    record_feedback(message='Skipped (time = 0)', current_row=current_row)
+                    continue
+
+            KAERS_ID = int(df['KAERS ID'][current_row])
+            
+            if str(KAERS_ID) in separated_list:
+                logging.warning(f"SEPARATED (skipped): Row {current_row + 1}")
+                record_feedback(message='Separated (skipped)', current_row=current_row)
+                continue
+           
+            page.goto(f"https://kaers.ky.gov/StudentGeneral.aspx?student_record_id={KAERS_ID}")
+            page.get_by_role("link", name="Tests").click()
+            try:
+                page.get_by_role("link", name="Enrollment").click()
+                time.sleep(1)
+                page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=3000)
+            except PwTimeoutError:
+                separated_list.append(str(KAERS_ID))
+                logging.warning(f"SEPARATED: Row {current_row + 1}; Separated ID's: {separated_list}")
+                record_feedback(message='Separated', current_row=current_row)
+                continue
+
+            time.sleep(.5)
+
+            attendance_type = str.title(df['Attendance Type'][current_row])
+            attendance_date = str(df['Attendance Date'][current_row])
+            page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendType_Arrow\"]").click()
+            page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendType_DropDown\"]").get_by_text(attendance_type).click()
+            page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rdpAttendDate_dateInput\"]").click()
+            page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rdpAttendDate_dateInput\"]").fill(attendance_date)
+            page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=3000)
+            time.sleep(1)
+           
+            if WelcWin.attend_type == "Live Attendance":
+                start_time = str(df['Start Time'][current_row])
+                end_time = str(df['End Time'][current_row])
+                page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rtpStartTime_dateInput\"]").click()
+                page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rtpStartTime_dateInput\"]").fill(start_time)
+                page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rtpEndTime_dateInput\"]").click()
+                page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rtpEndTime_dateInput\"]").fill(end_time)
+           
+            else:
+                product = str(df['Product'][current_row])
+                total_time = str(df['Total Time'][current_row])
+                page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbProducts_Arrow\"]").click()
+                time.sleep(.5)
+                page.get_by_text(product).click()
+                page.get_by_role("textbox", name="Total time should not be more than 20 hours!").click()
+                page.get_by_role("textbox", name="Total time should not be more than 20 hours!").fill(total_time)
+
+            if pd.notna(df['Site'][current_row]):
+                site = str(df['Site'][current_row])
+                page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendSite_Arrow\"]").click()
+                try:
+                    page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendSite_DropDown\"]").get_by_text(site).click()
+                except PwTimeoutError:
+                    logging.warning(f"Enrolled somewhere else? Row {current_row + 1}")
+                    record_feedback(message="Error: Enrolled somewhere else?", current_row=current_row)
+                    continue
+            # page.get_by_role("cell", name="Approve :", exact=True).click()
+
+            page.get_by_role("button", name="Save").click()
+            time.sleep(1)
+
+            try:
+                page.get_by_text("Attendance has been Saved.").click(timeout=8000)
+                # page.locator(f'[id=\"ct100_MainContent_Attendance_userControl\\?{KAERS_ID}_lblMsg"]').click(timeout=8000)
+                logging.info(f"Successfully entered: Row {current_row + 1}")
+                record_feedback(message='✅', current_row=current_row)
+            except PwTimeoutError:
+                logging.warning(f"Date or time rejected: Row {current_row + 1}")
+                record_feedback(message='Error: Date or time rejected', current_row=current_row)
+       
+
+        except PwTimeoutError as err:
+            logging.error(f"{err} - Entry failed: Row {current_row + 1}")
+            record_feedback(message='Error: Something timed out', current_row=current_row)
+        
+
+        # except (KeyError, ValueError):
+        #     if str(KAERS_ID) == '#N/A':
+        #         logging.warning(f"ID #N/A: Row {count + 1}")
+        #         record_feedback(message='Error: Invalid ID', current_row=count)
+        #         continue
+        #     else:
+        #         logging.info(f"Blank ID found. Stopping program. Row {count + 2}")
+        #         break
+
+
+        finally:
+            current_row += 1
+
+
+    # ---------------------
+    context.close()
+    browser.close()
+
+
+with sync_playwright() as playwright:
+    run(playwright)
+
+
+process_completed_check()
