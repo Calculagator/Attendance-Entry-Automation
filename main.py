@@ -204,7 +204,8 @@ logging.basicConfig(level=logging.INFO, filename=f"logs/" + f"{wb.title} _ {shee
 
 ws = wb.worksheet(f"{sheet_window.ws}")
 df = pd.DataFrame(ws.get_all_records())
-df= df.replace('', None)
+df = df.replace('', None)
+df = df.replace('#N/A', None)
 idx = df.columns.get_loc("entered?")
 ENTERED_COLUMN = idx + 1
 
@@ -233,7 +234,7 @@ def run(playwright: Playwright) -> None:
     time.sleep(8)
 
     if WelcWin.row_start:
-        current_row = WelcWin.row_start - 1
+        current_row = WelcWin.row_start
     else:
         current_row = 0
 
