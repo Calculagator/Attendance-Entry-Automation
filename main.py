@@ -204,7 +204,7 @@ logging.basicConfig(level=logging.INFO, filename=f"logs/" + f"{wb.title} _ {shee
 
 ws = wb.worksheet(f"{sheet_window.ws}")
 df = pd.DataFrame(ws.get_all_records())
-df['KAERS ID'] = df['KAERS ID'].replace('', None)
+df= df.replace('', None)
 idx = df.columns.get_loc("entered?")
 ENTERED_COLUMN = idx + 1
 
@@ -213,10 +213,6 @@ estimate_completion_time()
 logging.info(f"\n\n~ {WelcWin.attend_type} Entry ~\n"
              f"File chosen: {wb.title}\n")
 starting_time = datetime.now().strftime("%H:%M")
-
-
-val = ws.cell(1, 2).value
-print(val)
 
 
 def run(playwright: Playwright) -> None:
