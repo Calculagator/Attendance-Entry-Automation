@@ -84,14 +84,18 @@ class SelectSheetWindow:
         self.select_sheet_label.configure(padx=10, pady=20)
 
         self.radio_state = StringVar(value="None")
-        i = 0
+        row = 1
+        column = 1
         for name in tabs:
-            i += 1
+            if row > 8:
+                row = 1
+                column += 1
             button = customtkinter.CTkRadioButton(master=self.frame, text=name, value=name, variable=self.radio_state)
-            button.grid(sticky=W, padx=50, pady=5)
+            button.grid(row=row, column=column, sticky=W, padx=50, pady=5)
+            row += 1
 
         self.start_button = customtkinter.CTkButton(master=self.frame, text="Next", command=self.sheet_selected_check)
-        self.start_button.grid(row=i + 1, pady=10)
+        self.start_button.grid(row=9, column=2, pady=10)
 
     def sheet_selected_check(self):
         """Checks if a sheet was chosen. If not, displays "Oops" message box. Otherwise, saves selected sheet as variable."""
@@ -112,10 +116,10 @@ def on_close():
 
 def estimate_completion_time():
     global df
-    row_count = df['KAERS ID'].count()
-    print("Num of rows: ", row_count)
+    num_of_entries = df['KAERS ID'].count()
+    print("Num of entries: ", num_of_entries)
     rate = 175
-    estimated_time = (row_count - WelcWin.row_start + 1) / rate
+    estimated_time = (num_of_entries - WelcWin.row_start + 1) / rate
 
     if estimated_time < 1:
         hours = 0
@@ -200,6 +204,7 @@ logging.basicConfig(level=logging.INFO, filename=f"logs/" + f"{wb.title} _ {shee
 
 ws = wb.worksheet(f"{sheet_window.ws}")
 df = pd.DataFrame(ws.get_all_records())
+df['KAERS ID'] = df['KAERS ID'].replace('', None)
 idx = df.columns.get_loc("entered?")
 ENTERED_COLUMN = idx + 1
 
