@@ -338,6 +338,11 @@ def run(playwright: Playwright) -> None:
         except PwTimeoutError as err:
             logging.error(f"{err} - Entry failed: Row {current_row + 1}")
             record_feedback(message='Error: Something timed out', current_row=current_row)
+
+
+        except ValueError as err:
+            logging.error(f"{err} - Entry failed: Row {current_row + 1}")
+            record_feedback(message='Error: Invalid info', current_row=current_row)
         
 
         # except (KeyError, ValueError):
