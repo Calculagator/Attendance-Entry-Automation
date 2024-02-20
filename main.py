@@ -1,15 +1,13 @@
-from playwright.sync_api import Playwright, sync_playwright, expect, TimeoutError as PwTimeoutError
+from playwright.sync_api import Playwright, sync_playwright, TimeoutError as PwTimeoutError
 from dotenv import load_dotenv
 import os
 import tkinter.messagebox
 import customtkinter
 from customtkinter import *
-from openpyxl import load_workbook
 import pandas as pd
 from datetime import datetime, timedelta
 import time
 import logging
-from logging import FileHandler
 import gspread
 from google.oauth2.service_account import Credentials
 import re
