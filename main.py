@@ -112,8 +112,7 @@ def on_close():
         sys.exit()
 
 
-def estimate_completion_time():
-    global df
+def estimate_completion_time(df):
     num_of_entries = df['KAERS ID'].count()
     print("Num of entries: ", num_of_entries)
     rate = 175
@@ -137,9 +136,22 @@ def estimate_completion_time():
         sys.exit()
 
 
-def record_feedback(message, current_row):
+def record_feedback(message: str, current_row: int):
     """Writes message parameter in 'entered?' column."""
     ws.update_cell(current_row + 2, ENTERED_COLUMN, f'{message}')
+
+
+def tab_exists(title: str) -> bool:
+    tab_exists: bool = wb.worksheet(title)
+    return tab_exists
+
+
+def create_tab(title: str, rows: int, cols: int):
+    if tab_exists(title):
+        print(f'A tab named {title} already exists.')
+    else:
+        wb.add_worksheet(title=title, rows=rows, cols=cols)
+        print(f'Successfully created tab named {title}.')
 
 
 def process_completed_check():
@@ -207,7 +219,7 @@ df = df.replace('#N/A', None)
 idx = df.columns.get_loc("entered?")
 ENTERED_COLUMN = idx + 1
 
-estimate_completion_time()
+estimate_completion_time(df)
 
 logging.info(f"\n\n~ {WelcWin.attend_type} Entry ~\n"
              f"File chosen: {wb.title}\n")
@@ -279,6 +291,7 @@ def run(playwright: Playwright) -> None:
                 separated_list.append(str(KAERS_ID))
                 logging.warning(f"SEPARATED: Row {current_row + 1}; Separated ID's: {separated_list}")
                 record_feedback(message='Separated', current_row=current_row)
+                # create_tab(title='Separated', rows=500, cols=10)
                 continue
 
             time.sleep(.5)
