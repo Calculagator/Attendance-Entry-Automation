@@ -286,7 +286,7 @@ def run(playwright: Playwright) -> None:
             try:
                 page.get_by_role("link", name="Enrollment").click()
                 time.sleep(1)
-                page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=3000)
+                page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=5000)
             except PwTimeoutError:
                 separated_list.append(str(KAERS_ID))
                 logging.warning(f"SEPARATED: Row {current_row + 1}; Separated ID's: {separated_list}")
