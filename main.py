@@ -391,8 +391,8 @@ def run(playwright: Playwright) -> None:
         
 
         except WouldGetOver12HoursException as err:
-            logging.warning(f"{err} - Entry skipped: Row {current_row + 1} below 12 hours")
-            record_feedback(message=f'Skipped (below 12 hours)', current_row=current_row)
+            logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Entry would get student above 12hrs")
+            record_feedback(message=f'Skipped (entry would get student above 12hrs)', current_row=current_row)
 
 
         except PwTimeoutError as err:
