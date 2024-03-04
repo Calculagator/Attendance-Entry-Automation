@@ -180,19 +180,13 @@ def would_get_over_12_hrs(page: Playwright, KAERS_ID: float, current_row: int) -
         total_time = end_time - start_time
         secs = total_time.seconds
         attendance_to_add = secs/3600
-
-        if current_attend_hours + attendance_to_add >= 12:
-            return True
-        else:
-            return False
-
-
     else:
         attendance_to_add = float(df['Total Time'][current_row])
-        if current_attend_hours + attendance_to_add >= 12:
-            return True
-        else:
-            return False
+    
+    if current_attend_hours + attendance_to_add >= 12:
+        return True
+    else:
+        return False
       
     # if 9 < current_attend_hours < 12:
     #     return True
