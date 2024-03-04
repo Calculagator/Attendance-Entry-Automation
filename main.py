@@ -13,6 +13,11 @@ from google.oauth2.service_account import Credentials
 import re
 
 
+class Below12HrsException(Exception):
+    """Raised if student has below 12 attendance hours."""
+    ...
+
+
 class WelcomeWindow:
 
     def __init__(self):
@@ -50,14 +55,21 @@ class WelcomeWindow:
         self.row_start_entry = customtkinter.CTkEntry(master=frame, width=150, font=("Roboto", 13))
         self.row_start_entry.grid(row=8, column=2, pady=5)
 
+        self.below_12_check = customtkinter.BooleanVar(value=False)
+        self.below_12_checkbox = customtkinter.CTkCheckBox(master=frame, text="Skip students below 12 hrs?", variable=self.below_12_check,
+                                                           onvalue=True, offvalue=False)
+        self.below_12_checkbox.grid(row=9, column=2, pady=5)
+
         self.start_button = customtkinter.CTkButton(master=frame, text="Next", font=("Roboto", 14),
                                                     command=self.fields_completed_check)
-        self.start_button.grid(row=9, column=2, pady=20)
+        self.start_button.grid(row=10, column=2, pady=20)
 
     def get_entries(self):
         self.attend_type = self.radio_state.get()
         self.row_start = int(self.row_start_entry.get()) - 1
         self.url = self.google_sheet_url_entry.get()
+        self.skip_below_12 = self.below_12_check.get()
+        print(f'Skip below 12 = {self.skip_below_12}')
 
     def fields_completed_check(self):
         """If any field is empty, gives a messagebox. If all fields are filled, gathers user's selections and closes window."""
@@ -66,6 +78,7 @@ class WelcomeWindow:
         else:
             self.get_entries()
             window.destroy()
+
 
 class SelectSheetWindow:
 
@@ -103,6 +116,7 @@ class SelectSheetWindow:
         else:
             print(self.ws)
             window.destroy()
+
 
 def on_close():
     """If user clicks close button, gives warning message about closing program."""
@@ -152,6 +166,16 @@ def create_tab(title: str, rows: int, cols: int):
     else:
         wb.add_worksheet(title=title, rows=rows, cols=cols)
         print(f'Successfully created tab named {title}.')
+
+
+def below_12_attendance_hrs(page: Playwright, KAERS_ID: float, current_row: int) -> bool:
+    current_attend_hours = float(page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_lblHrS\"]").inner_text(timeout=5000))
+    logging.info(f"Row {current_row + 1} - Current attendance hours: {current_attend_hours}")
+
+    if current_attend_hours < 12:
+        return True
+    else:
+        return False
 
 
 def process_completed_check():
@@ -296,6 +320,10 @@ def run(playwright: Playwright) -> None:
 
             time.sleep(.5)
 
+            if WelcWin.skip_below_12:
+                if below_12_attendance_hrs(page, KAERS_ID, current_row):
+                    raise Below12HrsException
+
             attendance_type = str.title(df['Attendance Type'][current_row])
             attendance_date = str(df['Attendance Date'][current_row])
             page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendType_Arrow\"]").click()
@@ -344,7 +372,12 @@ def run(playwright: Playwright) -> None:
             except PwTimeoutError:
                 logging.warning(f"Date or time rejected: Row {current_row + 1}")
                 record_feedback(message='Error: Date or time rejected', current_row=current_row)
-       
+        
+
+        except Below12HrsException as err:
+            logging.warning(f"{err} - Entry skipped: Row {current_row + 1} below 12 hours")
+            record_feedback(message=f'Skipped (below 12 hours)', current_row=current_row)
+
 
         except PwTimeoutError as err:
             logging.error(f"{err} - Entry failed: Row {current_row + 1}")
