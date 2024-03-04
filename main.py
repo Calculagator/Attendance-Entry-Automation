@@ -13,9 +13,8 @@ from google.oauth2.service_account import Credentials
 import re
 
 
-class Below12HrsException(Exception):
-    """Raised if student has below 12 attendance hours."""
-    ...
+class WouldGetOver12HoursException(Exception):
+    """Raised if adding the current row's attendance would get the student above 12 hours."""
 
 
 class WelcomeWindow:
@@ -55,10 +54,10 @@ class WelcomeWindow:
         self.row_start_entry = customtkinter.CTkEntry(master=frame, width=150, font=("Roboto", 13))
         self.row_start_entry.grid(row=8, column=2, pady=5)
 
-        self.below_12_check = customtkinter.BooleanVar(value=False)
-        self.below_12_checkbox = customtkinter.CTkCheckBox(master=frame, text="Skip students below 12 hrs?", variable=self.below_12_check,
+        self.close_to_12_check = customtkinter.BooleanVar(value=False)
+        self.close_to_12_checkbox = customtkinter.CTkCheckBox(master=frame, text="Skip students close to 12 hrs?", variable=self.close_to_12_check,
                                                            onvalue=True, offvalue=False)
-        self.below_12_checkbox.grid(row=9, column=2, pady=5)
+        self.close_to_12_checkbox.grid(row=9, column=2, pady=5)
 
         self.start_button = customtkinter.CTkButton(master=frame, text="Next", font=("Roboto", 14),
                                                     command=self.fields_completed_check)
@@ -68,8 +67,8 @@ class WelcomeWindow:
         self.attend_type = self.radio_state.get()
         self.row_start = int(self.row_start_entry.get()) - 1
         self.url = self.google_sheet_url_entry.get()
-        self.skip_below_12 = self.below_12_check.get()
-        print(f'Skip below 12 = {self.skip_below_12}')
+        self.skip_close_to_12 = self.close_to_12_check.get()
+        print(f'Skip below 12 = {self.skip_close_to_12}')
 
     def fields_completed_check(self):
         """If any field is empty, gives a messagebox. If all fields are filled, gathers user's selections and closes window."""
@@ -168,14 +167,37 @@ def create_tab(title: str, rows: int, cols: int):
         print(f'Successfully created tab named {title}.')
 
 
-def below_12_attendance_hrs(page: Playwright, KAERS_ID: float, current_row: int) -> bool:
+def would_get_over_12_hrs(page: Playwright, KAERS_ID: float, current_row: int) -> bool:
+    """Pulls student's attendance hours from KAERS. Returns boolean of whether adding
+       the current row's attendance would get the student above 12 hours."""
     current_attend_hours = float(page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_lblHrS\"]").inner_text(timeout=5000))
     logging.info(f"Row {current_row + 1} - Current attendance hours: {current_attend_hours}")
 
-    if current_attend_hours < 12:
-        return True
+    if WelcWin.attend_type == "Live Attendance":
+        start_time = datetime.strptime(str(df['Start Time'][current_row]), "%H:%M:%S")
+        end_time = datetime.strptime(str(df['End Time'][current_row]), "%H:%M:%S")
+
+        total_time = end_time - start_time
+        secs = total_time.seconds
+        attendance_to_add = secs/3600
+
+        if current_attend_hours + attendance_to_add >= 12:
+            return True
+        else:
+            return False
+
+
     else:
-        return False
+        attendance_to_add = float(df['Total Time'][current_row])
+        if current_attend_hours + attendance_to_add >= 12:
+            return True
+        else:
+            return False
+      
+    # if 9 < current_attend_hours < 12:
+    #     return True
+    # else:
+    #     return False
 
 
 def process_completed_check():
@@ -320,9 +342,9 @@ def run(playwright: Playwright) -> None:
 
             time.sleep(.5)
 
-            if WelcWin.skip_below_12:
-                if below_12_attendance_hrs(page, KAERS_ID, current_row):
-                    raise Below12HrsException
+            if WelcWin.skip_close_to_12:
+                if would_get_over_12_hrs(page, KAERS_ID, current_row):
+                    raise WouldGetOver12HoursException
 
             attendance_type = str.title(df['Attendance Type'][current_row])
             attendance_date = str(df['Attendance Date'][current_row])
@@ -374,7 +396,7 @@ def run(playwright: Playwright) -> None:
                 record_feedback(message='Error: Date or time rejected', current_row=current_row)
         
 
-        except Below12HrsException as err:
+        except WouldGetOver12HoursException as err:
             logging.warning(f"{err} - Entry skipped: Row {current_row + 1} below 12 hours")
             record_feedback(message=f'Skipped (below 12 hours)', current_row=current_row)
 
