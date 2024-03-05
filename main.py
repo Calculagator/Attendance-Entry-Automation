@@ -189,11 +189,6 @@ def would_get_over_12_hrs(page: Playwright, KAERS_ID: float, current_row: int) -
         return True
     else:
         return False
-      
-    # if 9 < current_attend_hours < 12:
-    #     return True
-    # else:
-    #     return False
 
 
 def process_completed_check():
@@ -203,7 +198,7 @@ def process_completed_check():
     logging.info(f"Attendance entry complete | Started - {starting_time} | Finished - {finished_time}")
 
 
-# Opens Welcome Window: user selects attendance type, file, copied file name & enters login info
+# Opens Welcome Window: user selects attendance type, enters Google Sheet url, row ID to start on, and whether to skip getting students above 12 hrs
 window = CTk()
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("dark-blue")
@@ -215,7 +210,6 @@ window.config(padx=25, pady=25)
 WelcWin = WelcomeWindow()
 window.protocol("WM_DELETE_WINDOW", on_close)
 window.mainloop()
-# https://docs.google.com/spreadsheets/d/1Dxn1vYr6Ey3ZzGz4M0XsCUJMDcr7u2UiCvC5eEE3pzc/edit#gid=480225743
 
 # ~~~
 
@@ -240,19 +234,8 @@ sheet_window = SelectSheetWindow()
 window.protocol("WM_DELETE_WINDOW", on_close)
 window.mainloop()
 
-# logger = logging.getLogger(f'{wb.title}.log')
-# log_file_path = 'logs'
-# file_handler = FileHandler(log_file_path)
-# formatter = logging.Formatter(format="%(asctime)s - %(levelname)s - %(message)s",
-#                               datefmt="%Y-%m-%d %H:%M:%S")
-# file_handler.setFormatter(formatter)
-# logger.addHandler(file_handler)
 logging.basicConfig(level=logging.INFO, filename=f"logs/" + f"{wb.title} _ {sheet_window.ws}.log".replace('/', '.'), filemode='w',
                     format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
-
-
-# values_list = sheet.sheet1.row_values(1)
-# print(values_list)
 
 ws = wb.worksheet(f"{sheet_window.ws}")
 df = pd.DataFrame(ws.get_all_records())
@@ -333,7 +316,6 @@ def run(playwright: Playwright) -> None:
                 separated_list.append(str(KAERS_ID))
                 logging.warning(f"SEPARATED: Row {current_row + 1}; Separated ID's: {separated_list}")
                 record_feedback(message='Separated', current_row=current_row)
-                # create_tab(title='Separated', rows=500, cols=10)
                 continue
 
             time.sleep(.5)
@@ -384,7 +366,6 @@ def run(playwright: Playwright) -> None:
 
             try:
                 page.get_by_text("Attendance has been Saved.").click(timeout=8000)
-                # page.locator(f'[id=\"ct100_MainContent_Attendance_userControl\\?{KAERS_ID}_lblMsg"]').click(timeout=8000)
                 logging.info(f"Successfully entered: Row {current_row + 1}")
                 record_feedback(message='✅', current_row=current_row)
             except PwTimeoutError:
@@ -405,17 +386,7 @@ def run(playwright: Playwright) -> None:
         except ValueError as err:
             logging.error(f"{err} - Entry failed: Row {current_row + 1}")
             record_feedback(message='Error: Invalid info', current_row=current_row)
-        
-
-        # except (KeyError, ValueError):
-        #     if str(KAERS_ID) == '#N/A':
-        #         logging.warning(f"ID #N/A: Row {count + 1}")
-        #         record_feedback(message='Error: Invalid ID', current_row=count)
-        #         continue
-        #     else:
-        #         logging.info(f"Blank ID found. Stopping program. Row {count + 2}")
-        #         break
-
+            
 
         finally:
             current_row += 1
