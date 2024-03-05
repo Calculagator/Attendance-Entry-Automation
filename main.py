@@ -174,14 +174,16 @@ def would_get_over_12_hrs(page: Playwright, KAERS_ID: float, current_row: int) -
     logging.info(f"Row {current_row + 1} - Current attendance hours: {current_attend_hours}")
 
     if WelcWin.attend_type == "Live Attendance":
-        start_time = datetime.strptime(str(df['Start Time'][current_row]), "%H:%M:%S")
-        end_time = datetime.strptime(str(df['End Time'][current_row]), "%H:%M:%S")
+        start_time = datetime.strptime(str(df['Start Time'][current_row]), "%H:%M")
+        end_time = datetime.strptime(str(df['End Time'][current_row]), "%H:%M")
 
         total_time = end_time - start_time
         secs = total_time.seconds
         attendance_to_add = secs/3600
     else:
         attendance_to_add = float(df['Total Time'][current_row])
+
+    logging.info(f"Row {current_row + 1} - Attendance to add: {attendance_to_add}")
     
     if current_attend_hours < 12 and current_attend_hours + attendance_to_add >= 12:
         return True
