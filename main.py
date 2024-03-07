@@ -55,7 +55,7 @@ class WelcomeWindow:
         self.row_start_entry.grid(row=8, column=2, pady=5)
 
         self.close_to_12_check = customtkinter.BooleanVar(value=False)
-        self.close_to_12_checkbox = customtkinter.CTkCheckBox(master=frame, text="Skip students close to 12 hrs?", variable=self.close_to_12_check,
+        self.close_to_12_checkbox = customtkinter.CTkCheckBox(master=frame, text="Skip students that would get above 12 hrs?", variable=self.close_to_12_check,
                                                            onvalue=True, offvalue=False)
         self.close_to_12_checkbox.grid(row=9, column=2, pady=5)
 
@@ -140,13 +140,14 @@ def estimate_completion_time(df):
 
     add_time = timedelta(hours=hours, minutes=minutes)
     estimate_finish_time = (datetime.now() + add_time).strftime("%H:%M")
-    logging.info(f"Estimated time = {estimate_finish_time}")
 
     yes_no_box = tkinter.messagebox.askyesno(title="Estimated Time",
                                              message=f"This process is estimated to finish at {estimate_finish_time}.\n\n"
                                                      f"Start the program?")
     if not yes_no_box:
         sys.exit()
+
+    return estimate_finish_time
 
 
 def record_feedback(message: str, current_row: int):
@@ -244,10 +245,13 @@ df = df.replace('#N/A', None)
 idx = df.columns.get_loc("entered?")
 ENTERED_COLUMN = idx + 1
 
-estimate_completion_time(df)
+estimated_finish_time = estimate_completion_time(df)
 
 logging.info(f"\n\n~ {WelcWin.attend_type} Entry ~\n"
-             f"File chosen: {wb.title}\n")
+             f"File chosen: {wb.title}\n"
+             f"Skip rows that get above 12 hours: {WelcWin.skip_close_to_12}\n"
+             f"Estimated finish time - {estimated_finish_time}\n")
+
 starting_time = datetime.now().strftime("%H:%M")
 
 
@@ -374,7 +378,7 @@ def run(playwright: Playwright) -> None:
         
 
         except WouldGetOver12HoursException as err:
-            logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Entry would get student at 12+hrs")
+            logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Entry would get student above 12 hrs")
             record_feedback(message=f'Skipped (entry would get student above 12hrs)', current_row=current_row)
 
 
