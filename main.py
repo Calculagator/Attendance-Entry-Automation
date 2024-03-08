@@ -168,6 +168,20 @@ def create_tab(title: str, rows: int, cols: int):
         print(f'Successfully created tab named {title}.')
 
 
+def create_log(log_path: str) -> str:
+    """Creates log with version number to prevent overwriting logs."""
+    log_exists = os.path.isfile(log_path)
+    version_number = 2
+
+    while log_exists:
+        log_path = log_path.replace(f" ver{str(version_number - 1)}", "")
+        log_path = log_path + " ver" + str(version_number)
+        version_number += 1
+        log_exists = os.path.isfile(log_path)
+
+    return log_path
+
+
 def would_get_over_12_hrs(page: Playwright, KAERS_ID: float, current_row: int) -> bool:
     """Pulls student's attendance hours from KAERS. Returns boolean of whether adding
        the current row's attendance would get the student above 12 hours."""
@@ -235,7 +249,12 @@ sheet_window = SelectSheetWindow()
 window.protocol("WM_DELETE_WINDOW", on_close)
 window.mainloop()
 
-logging.basicConfig(level=logging.INFO, filename=f"logs/" + f"{wb.title} _ {sheet_window.ws}.log".replace('/', '.'), filemode='w',
+log_path = f"logs/{wb.title} _ {sheet_window.ws}.log".replace('/', '.')
+
+# log_path = create_log(log_path)
+
+
+logging.basicConfig(level=logging.INFO, filename=log_path, filemode='a',
                     format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 ws = wb.worksheet(f"{sheet_window.ws}")
