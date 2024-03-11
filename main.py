@@ -249,7 +249,7 @@ sheet_window = SelectSheetWindow()
 window.protocol("WM_DELETE_WINDOW", on_close)
 window.mainloop()
 
-log_path = f"logs/{wb.title.replace('/', '.')} _ {sheet_window.ws}.log"
+log_path = f"logs/{wb.title.replace('/', '.')} _ {sheet_window.ws.replace('/', '.')}.log"
 
 # log_path = create_log(log_path)
 
