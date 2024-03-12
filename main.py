@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import time
 import logging
 import gspread
+from gspread import exceptions
 from google.oauth2.service_account import Credentials
 import re
 
@@ -396,9 +397,14 @@ def run(playwright: Playwright) -> None:
                 record_feedback(message='Error: Date or time rejected', current_row=current_row)
         
 
+        except exceptions.APIError as err:
+            logging.error(f"{err} - Error: Row {current_row + 1} | Something went wrong on Google's end")
+            record_feedback(message="Error: Something went wrong on Google's end", current_row=current_row)
+
+
         except WouldGetOver12HoursException as err:
             logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Entry would get student above 12 hrs")
-            record_feedback(message=f'Skipped (entry would get student above 12hrs)', current_row=current_row)
+            record_feedback(message='Skipped (entry would get student above 12hrs)', current_row=current_row)
 
 
         except PwTimeoutError as err:
