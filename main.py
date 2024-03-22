@@ -69,7 +69,7 @@ class WelcomeWindow:
         self.row_start = int(self.row_start_entry.get()) - 1
         self.url = self.google_sheet_url_entry.get()
         self.skip_close_to_12 = self.close_to_12_check.get()
-        print(f'Skip below 12 = {self.skip_close_to_12}')
+        print(f'Skip getting students past 12 = {self.skip_close_to_12}')
 
     def fields_completed_check(self):
         """If any field is empty, gives a messagebox. If all fields are filled, gathers user's selections and closes window."""
@@ -129,7 +129,7 @@ def on_close():
 def estimate_completion_time(df):
     num_of_entries = df['KAERS ID'].count()
     print("Num of entries: ", num_of_entries)
-    rate = 175
+    rate = 120
     estimated_time = (num_of_entries - WelcWin.row_start + 1) / rate
 
     if estimated_time < 1:
@@ -181,6 +181,29 @@ def create_log(log_path: str) -> str:
         log_exists = os.path.isfile(log_path)
 
     return log_path
+
+
+def get_enroll_status(page: Playwright, current_row) -> str:
+    """Returns student's enrollment status from profile page.
+       If not enrolled, records status."""
+    enroll_status = page.locator(f"[id=\"lblStatus\"]").inner_text()
+
+    if enroll_status != 'ENROLLED':
+        logging.warning(f"{enroll_status}: Row {current_row + 1}")
+        record_feedback(message=f'{enroll_status}', current_row=current_row)
+
+    return enroll_status
+
+
+def un_separate(page: Playwright, KAERS_ID: str):
+    """Un-separates a student."""
+    page.get_by_role("button", name="Edit Enrollment").first.click(timeout=5000)
+    time.sleep(3)
+    page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Enrollment").click(timeout=5000)
+    page.locator(f"[id=\"MainContent_Enrollment_userControl\\?{KAERS_ID}_chkReleased\"]").uncheck(timeout=3000)
+    time.sleep(.5)
+    page.get_by_role("button", name="Update").click(timeout=3000)
+    time.sleep(8)
 
 
 def would_get_over_12_hrs(page: Playwright, KAERS_ID: float, current_row: int) -> bool:
@@ -297,7 +320,6 @@ def run(playwright: Playwright) -> None:
     else:
         current_row = 0
 
-    separated_list = []
 
     for column in df['Row ID'].tolist():
 
@@ -317,6 +339,13 @@ def run(playwright: Playwright) -> None:
                     record_feedback(message='Blank ID', current_row=current_row)
                     continue
 
+
+            entered_cell = str(df['entered?'][current_row])
+            if entered_cell == '✅':
+                logging.info(f"Skipped: Row {current_row + 1} - Entry already entered. Status is: {entered_cell}")
+                continue
+
+
             if WelcWin.attend_type == "Distance Learning":
                 if df['Total Time'][current_row] == 0:
                     logging.info(f"Skipped (time = 0): Row {current_row + 1}")
@@ -325,23 +354,35 @@ def run(playwright: Playwright) -> None:
 
             KAERS_ID = int(df['KAERS ID'][current_row])
             
-            if str(KAERS_ID) in separated_list:
-                logging.warning(f"SEPARATED (skipped): Row {current_row + 1}")
-                record_feedback(message='Separated (skipped)', current_row=current_row)
-                continue
+            # if str(KAERS_ID) in separated_list:
+            #     logging.warning(f"SEPARATED (skipped): Row {current_row + 1}")
+            #     record_feedback(message='Separated (skipped)', current_row=current_row)
+            #     continue
            
             page.goto(f"https://kaers.ky.gov/StudentGeneral.aspx?student_record_id={KAERS_ID}")
-            page.get_by_role("link", name="Tests").click()
-            try:
-                page.get_by_role("link", name="Enrollment").click()
-                time.sleep(1)
-                page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=5000)
-            except PwTimeoutError:
-                separated_list.append(str(KAERS_ID))
-                logging.warning(f"SEPARATED: Row {current_row + 1}; Separated ID's: {separated_list}")
-                record_feedback(message='Separated', current_row=current_row)
+            time.sleep(.25)
+
+            enroll_status = page.locator(f"[id=\"lblStatus\"]").inner_text()
+            
+            if enroll_status == 'GENERAL':
+                logging.warning(f"{enroll_status}: Row {current_row + 1}")
+                record_feedback(message=f'{enroll_status}', current_row=current_row)
                 continue
 
+            page.get_by_role("link", name="Tests").click()
+            time.sleep(2)
+            page.get_by_role("link", name="Enrollment").click()
+            time.sleep(2)
+
+            if enroll_status == 'SEPARATED':
+                try:
+                    un_separate(page, KAERS_ID)
+                except PwTimeoutError:
+                    logging.warning(f"{enroll_status}: Row {current_row + 1} - could not un-separate")
+                    record_feedback(message=f'{enroll_status}', current_row=current_row)
+                    continue
+
+            page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=5000)
             time.sleep(.5)
 
             if WelcWin.skip_close_to_12:
