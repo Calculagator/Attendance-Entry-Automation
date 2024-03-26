@@ -196,7 +196,8 @@ def get_enroll_status(page: Playwright, current_row) -> str:
 
 
 def un_separate(page: Playwright, KAERS_ID: str):
-    """Un-separates a student."""
+    """Un-separates a student: Unchecks the 'Released' box and clicks Update,
+       which should change the student's status to ENROLLED."""
     page.get_by_role("button", name="Edit Enrollment").first.click(timeout=5000)
     time.sleep(3)
     page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Enrollment").click(timeout=5000)
@@ -332,8 +333,8 @@ def run(playwright: Playwright) -> None:
             
             if pd.isna(df['KAERS ID'][current_row]):
                 if pd.isna(df['First Name'][current_row]) and pd.isna(df['Last Name'][current_row]):
-                        logging.info(f'Blank row found. Program stopped. Row {current_row}\n')
-                        break
+                    logging.info(f'Blank row found. Program stopped. Row {current_row}\n')
+                    break
                 else:
                     logging.warning(f"Blank ID: Row {current_row + 1}")
                     record_feedback(message='Blank ID', current_row=current_row)
@@ -376,10 +377,12 @@ def run(playwright: Playwright) -> None:
 
             if enroll_status == 'SEPARATED':
                 try:
+                    logging.info(f"Row {current_row + 1} - Attempting to un-separate")
                     un_separate(page, KAERS_ID)
+                    logging.info(f"Row {current_row + 1} - Successfully un-separated")
                 except PwTimeoutError:
                     logging.warning(f"{enroll_status}: Row {current_row + 1} - could not un-separate")
-                    record_feedback(message=f'{enroll_status}', current_row=current_row)
+                    record_feedback(message=f'{enroll_status} - could not un-separate', current_row=current_row)
                     continue
 
             page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=5000)
