@@ -347,7 +347,7 @@ def run(playwright: Playwright) -> None:
 
 
             entered_cell = str(df['entered?'][current_row])
-            if entered_cell == '✅':
+            if entered_cell == '✅' or entered_cell == '✔️':
                 logging.info(f"Skipped: Row {current_row + 1} - Entry already entered. Status is: {entered_cell}")
                 continue
 
