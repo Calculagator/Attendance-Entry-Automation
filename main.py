@@ -330,15 +330,20 @@ def run(playwright: Playwright) -> None:
                 #log "Session expired"
                 #input("Session has expired. Please log into KAERS again and then push enter: ")
 
+
+            KAERS_ID = df['KAERS ID'][current_row]
             
-            if pd.isna(df['KAERS ID'][current_row]):
+
+            if pd.isna(df['KAERS ID'][current_row]) or len(str(KAERS_ID)) != 7:
                 if pd.isna(df['First Name'][current_row]) and pd.isna(df['Last Name'][current_row]):
                     logging.info(f'Blank row found. Program stopped. Row {current_row}\n')
                     break
                 else:
-                    logging.warning(f"Blank ID: Row {current_row + 1}")
-                    record_feedback(message='Blank ID', current_row=current_row)
+                    logging.warning(f"Invalid ID: Row {current_row + 1}")
+                    record_feedback(message='Invalid ID', current_row=current_row)
                     continue
+
+            KAERS_ID = int(KAERS_ID)
 
 
             entered_cell = str(df['entered?'][current_row])
@@ -353,7 +358,6 @@ def run(playwright: Playwright) -> None:
                     record_feedback(message='Skipped (time = 0)', current_row=current_row)
                     continue
 
-            KAERS_ID = int(df['KAERS ID'][current_row])
             
             # if str(KAERS_ID) in separated_list:
             #     logging.warning(f"SEPARATED (skipped): Row {current_row + 1}")
