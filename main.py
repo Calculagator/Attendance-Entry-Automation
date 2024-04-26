@@ -377,7 +377,7 @@ def run(playwright: Playwright) -> None:
             page.get_by_role("link", name="Tests").click()
             time.sleep(2)
             page.get_by_role("link", name="Enrollment").click()
-            time.sleep(2)
+            time.sleep(5)
 
             if enroll_status == 'SEPARATED':
                 try:
@@ -389,8 +389,8 @@ def run(playwright: Playwright) -> None:
                     record_feedback(message=f'{enroll_status} - could not un-separate', current_row=current_row)
                     continue
 
-            page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=5000)
-            time.sleep(.5)
+            page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=20000)
+            time.sleep(1)
 
             if WelcWin.skip_close_to_12:
                 if would_get_over_12_hrs(page, KAERS_ID, current_row):
