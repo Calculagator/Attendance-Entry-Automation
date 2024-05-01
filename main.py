@@ -377,7 +377,7 @@ def run(playwright: Playwright) -> None:
             page.get_by_role("link", name="Tests").click()
             time.sleep(2)
             page.get_by_role("link", name="Enrollment").click()
-            time.sleep(5)
+            time.sleep(3)
 
             if enroll_status == 'SEPARATED':
                 try:
@@ -388,6 +388,14 @@ def run(playwright: Playwright) -> None:
                     logging.warning(f"{enroll_status}: Row {current_row + 1} - could not un-separate")
                     record_feedback(message=f'{enroll_status} - could not un-separate', current_row=current_row)
                     continue
+
+            try:
+                page.get_by_text("This client is not enrolled in your location. Contact the enrollment location fo").click(timeout=2000)
+                logging.warning(f"Row {current_row +1} - enrolled somewhere else")
+                record_feedback(message='Error: Enrolled somewhere else')
+                continue
+            except PwTimeoutError:
+                pass
 
             page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=20000)
             time.sleep(1)
@@ -441,9 +449,13 @@ def run(playwright: Playwright) -> None:
                 logging.info(f"Successfully entered: Row {current_row + 1}")
                 record_feedback(message='✅', current_row=current_row)
             except PwTimeoutError:
-                logging.warning(f"Date or time rejected: Row {current_row + 1}")
-                record_feedback(message='Error: Date or time rejected', current_row=current_row)
-        
+                if page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_customValidatorAttendDate\"]").is_visible():
+                    logging.warning(f"Date or time rejected: Row {current_row + 1}")
+                    record_feedback(message='Error: Date or time rejected', current_row=current_row)
+                else:
+                    logging.warning(f"Error: Row {current_row + 1} - something went wrong")
+                    record_feedback(message='Error: Something went wrong', current_row=current_row)
+
 
         except exceptions.APIError as err:
             logging.error(f"{err} - Error: Row {current_row + 1} | Something went wrong on Google's end")
