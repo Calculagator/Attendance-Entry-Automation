@@ -392,7 +392,7 @@ def run(playwright: Playwright) -> None:
             try:
                 page.get_by_text("This client is not enrolled in your location. Contact the enrollment location fo").click(timeout=2000)
                 logging.warning(f"Row {current_row +1} - enrolled somewhere else")
-                record_feedback(message='Error: Enrolled somewhere else')
+                record_feedback(message='Error: Enrolled somewhere else', current_row=current_row)
                 continue
             except PwTimeoutError:
                 pass
