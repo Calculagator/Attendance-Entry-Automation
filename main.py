@@ -33,7 +33,7 @@ class WelcomeWindow:
         self.options = [
             "Live Attendance",
             "Distance Learning",
-            "Personal Contact (CCN)"
+            "CCN - Personal Contact"
         ]
 
         self.radio_state = StringVar(value="None")
@@ -231,11 +231,15 @@ def would_get_over_12_hrs(page: Playwright, KAERS_ID: float, current_row: int) -
         return False
 
 
-def process_completed_check():
-    """Displays yes/no box with end time and copied file name. Asks if user would like to open the copied file.
-     If yes, opens file."""
-    finished_time = datetime.now().strftime("%H:%M")
-    logging.info(f"Attendance entry complete | Started - {starting_time} | Finished - {finished_time}")
+def process_finished_analysis(df: pd.DataFrame, entered: int, date_time_rejected: int,
+                              timeout_errors: int, skipped_12_hrs: int|str):
+    """Logs automation's performance data such as number of rows entered, errors, etc."""
+    total_rows = df['KAERS ID'].count()
+    num_rows_attempted = total_rows - WelcWin.row_start + 1
+
+    logging.info(f"\nAttendance entry complete - Rows entered: {entered} | Rows attempted: {num_rows_attempted}\n"
+                 f"Date/Time rejected: {date_time_rejected} | Timeout errors: {timeout_errors} | Skipped over 12 hrs: {skipped_12_hrs}")
+
 
 
 # Opens Welcome Window: user selects attendance type, enters Google Sheet url, row ID to start on, and whether to skip getting students above 12 hrs
@@ -298,6 +302,19 @@ logging.info(f"\n\n~ {WelcWin.attend_type} Entry ~\n"
 
 starting_time = datetime.now().strftime("%H:%M")
 
+num_entered = 0
+num_date_time_rejected = 0
+num_timeout_errors = 0
+if WelcWin.skip_close_to_12:
+    num_skipped_close_to_12 = 0
+else:
+    num_skipped_close_to_12 = 'N/A'
+
+if WelcWin.row_start:
+    current_row = WelcWin.row_start
+else:
+    current_row = 0
+
 
 def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False, args=["--start-maximized"])
@@ -315,11 +332,6 @@ def run(playwright: Playwright) -> None:
     page.locator("#rtxtPassword").fill(PASSWORD)
     page.get_by_role("button", name="Sign in").click()
     time.sleep(8)
-
-    if WelcWin.row_start:
-        current_row = WelcWin.row_start
-    else:
-        current_row = 0
 
 
     for column in df['Row ID'].tolist():
@@ -448,10 +460,12 @@ def run(playwright: Playwright) -> None:
                 page.get_by_text("Attendance has been Saved.").click(timeout=8000)
                 logging.info(f"Successfully entered: Row {current_row + 1}")
                 record_feedback(message='✅', current_row=current_row)
+                num_entered += 1
             except PwTimeoutError:
                 if page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_customValidatorAttendDate\"]").is_visible():
                     logging.warning(f"Date or time rejected: Row {current_row + 1}")
                     record_feedback(message='Error: Date or time rejected', current_row=current_row)
+                    num_date_time_rejected += 1
                 else:
                     logging.warning(f"Error: Row {current_row + 1} - something went wrong")
                     record_feedback(message='Error: Something went wrong', current_row=current_row)
@@ -465,11 +479,13 @@ def run(playwright: Playwright) -> None:
         except WouldGetOver12HoursException as err:
             logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Entry would get student above 12 hrs")
             record_feedback(message='Skipped (entry would get student above 12hrs)', current_row=current_row)
+            num_skipped_close_to_12 += 1
 
 
         except PwTimeoutError as err:
             logging.error(f"{err} - Entry failed: Row {current_row + 1}")
             record_feedback(message='Error: Something timed out', current_row=current_row)
+            num_timeout_errors += 1
 
 
         except ValueError as err:
@@ -490,4 +506,5 @@ with sync_playwright() as playwright:
     run(playwright)
 
 
-process_completed_check()
+process_finished_analysis(df, num_entered, num_date_time_rejected,
+                          num_timeout_errors, num_skipped_close_to_12)
