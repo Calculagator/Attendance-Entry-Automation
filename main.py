@@ -231,6 +231,12 @@ def would_get_over_12_hrs(page: Playwright, KAERS_ID: float, current_row: int) -
         return False
 
 
+def record_attend_hrs(page: Playwright, current_row: int, KAERS_ID: float):
+    """Pulls and records student's attendance hours in KAERS after row has been entered."""
+    current_attend_hours = float(page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_lblHrS\"]").inner_text(timeout=5000))
+    ws.update_cell(current_row + 2, CURRENT_HOURS_IN_KAERS_COLUMN, f'{current_attend_hours}')
+
+
 def process_finished_analysis(df: pd.DataFrame, entered: int, date_time_rejected: int,
                               timeout_errors: int, skipped_12_hrs: int|str):
     """Logs automation's performance data such as number of rows entered, errors, etc."""
@@ -290,8 +296,9 @@ ws = wb.worksheet(f"{sheet_window.ws}")
 df = pd.DataFrame(ws.get_all_records())
 df = df.replace('', None)
 df = df.replace('#N/A', None)
-idx = df.columns.get_loc("entered?")
-ENTERED_COLUMN = idx + 1
+# idx = df.columns.get_loc("entered?")
+ENTERED_COLUMN = df.columns.get_loc("entered?") + 1
+CURRENT_HOURS_IN_KAERS_COLUMN = df.columns.get_loc("Current hours in KAERS") + 1
 
 estimated_finish_time = estimate_completion_time(df)
 
@@ -463,12 +470,14 @@ def run(playwright: Playwright) -> None:
                 page.get_by_text("Attendance has been Saved.").click(timeout=8000)
                 logging.info(f"Successfully entered: Row {current_row + 1}")
                 record_feedback(message='✅', current_row=current_row)
+                record_attend_hrs(page, current_row, KAERS_ID)
                 num_entered += 1
             except PwTimeoutError:
                 if page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_customValidatorAttendDate\"]").is_visible():
                     enroll_date = page.locator("#MainContent_lblEnrollmentDate").inner_text()
                     logging.warning(f"Date/time rejected: Row {current_row + 1}")
                     record_feedback(message=f'Date/time rejected | Enrolled: {enroll_date}', current_row=current_row)
+                    record_attend_hrs(page, current_row, KAERS_ID)
                     num_date_time_rejected += 1
                 else:
                     logging.warning(f"Error: Row {current_row + 1} - something went wrong")
