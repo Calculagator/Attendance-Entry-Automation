@@ -310,10 +310,7 @@ if WelcWin.skip_close_to_12:
 else:
     num_skipped_close_to_12 = 'N/A'
 
-if WelcWin.row_start:
-    current_row = WelcWin.row_start
-else:
-    current_row = 0
+
 
 
 def run(playwright: Playwright) -> None:
@@ -332,6 +329,12 @@ def run(playwright: Playwright) -> None:
     page.locator("#rtxtPassword").fill(PASSWORD)
     page.get_by_role("button", name="Sign in").click()
     time.sleep(8)
+
+
+    if WelcWin.row_start:
+        current_row = WelcWin.row_start
+    else:
+        current_row = 0
 
 
     for column in df['Row ID'].tolist():
@@ -463,8 +466,9 @@ def run(playwright: Playwright) -> None:
                 num_entered += 1
             except PwTimeoutError:
                 if page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_customValidatorAttendDate\"]").is_visible():
-                    logging.warning(f"Date or time rejected: Row {current_row + 1}")
-                    record_feedback(message='Error: Date or time rejected', current_row=current_row)
+                    enroll_date = page.locator("#MainContent_lblEnrollmentDate").inner_text()
+                    logging.warning(f"Date/time rejected: Row {current_row + 1}")
+                    record_feedback(message=f'Date/time rejected | Enrolled: {enroll_date}', current_row=current_row)
                     num_date_time_rejected += 1
                 else:
                     logging.warning(f"Error: Row {current_row + 1} - something went wrong")
