@@ -318,9 +318,8 @@ else:
     num_skipped_close_to_12 = 'N/A'
 
 
-
-
-def run(playwright: Playwright) -> None:
+def run(playwright: Playwright, num_entered, num_date_time_rejected,
+        num_timeout_errors, num_skipped_close_to_12) -> None:
     browser = playwright.chromium.launch(headless=False, args=["--start-maximized"])
     context = browser.new_context(no_viewport=True)
     page = context.new_page()
@@ -516,7 +515,8 @@ def run(playwright: Playwright) -> None:
 
 
 with sync_playwright() as playwright:
-    run(playwright)
+    run(playwright, num_entered, num_date_time_rejected,
+        num_timeout_errors, num_skipped_close_to_12)
 
 
 process_finished_analysis(df, num_entered, num_date_time_rejected,
