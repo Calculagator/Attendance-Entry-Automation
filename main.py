@@ -234,18 +234,17 @@ def would_get_over_12_hrs(page: Playwright, KAERS_ID: float, current_row: int) -
 def record_attend_hrs(page: Playwright, current_row: int, KAERS_ID: float):
     """Pulls and records student's attendance hours in KAERS after row has been entered."""
     current_attend_hours = float(page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_lblHrS\"]").inner_text(timeout=5000))
-    ws.update_cell(current_row + 2, CURRENT_HOURS_IN_KAERS_COLUMN, f'{current_attend_hours}')
+    ws.update_cell(current_row + 2, HOURS_AFTER_ENTRY_COLUMN, f'{current_attend_hours}')
 
 
-def process_finished_analysis(df: pd.DataFrame, entered: int, date_time_rejected: int,
-                              timeout_errors: int, skipped_12_hrs: int|str):
+def process_finished_analysis(df: pd.DataFrame):
     """Logs automation's performance data such as number of rows entered, errors, etc."""
+    global num_entered, num_date_time_rejected, num_timeout_errors, num_skipped_close_to_12
     total_rows = df['KAERS ID'].count()
-    num_rows_attempted = total_rows - WelcWin.row_start + 1
+    num_rows_attempted = total_rows - WelcWin.row_start + 2
 
-    logging.info(f"\nAttendance entry complete - Rows entered: {entered} | Rows attempted: {num_rows_attempted}\n"
-                 f"Date/Time rejected: {date_time_rejected} | Timeout errors: {timeout_errors} | Skipped over 12 hrs: {skipped_12_hrs}")
-
+    logging.info(f"\nAttendance entry complete - Rows entered: {num_entered} | Rows attempted: {num_rows_attempted}\n"
+                 f"Date/Time rejected: {num_date_time_rejected} | Timeout errors: {num_timeout_errors} | Skipped over 12 hrs: {num_skipped_close_to_12}")
 
 
 # Opens Welcome Window: user selects attendance type, enters Google Sheet url, row ID to start on, and whether to skip getting students above 12 hrs
@@ -298,7 +297,11 @@ df = df.replace('', None)
 df = df.replace('#N/A', None)
 # idx = df.columns.get_loc("entered?")
 ENTERED_COLUMN = df.columns.get_loc("entered?") + 1
-CURRENT_HOURS_IN_KAERS_COLUMN = df.columns.get_loc("Current hours in KAERS") + 1
+try:
+    HOURS_AFTER_ENTRY_COLUMN = df.columns.get_loc("Hours after entry") + 1
+    hours_after_entry_col_exists = True
+except KeyError:
+    hours_after_entry_col_exists = False
 
 estimated_finish_time = estimate_completion_time(df)
 
@@ -318,11 +321,11 @@ else:
     num_skipped_close_to_12 = 'N/A'
 
 
-def run(playwright: Playwright, num_entered, num_date_time_rejected,
-        num_timeout_errors, num_skipped_close_to_12) -> None:
+def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False, args=["--start-maximized"])
     context = browser.new_context(no_viewport=True)
     page = context.new_page()
+    global num_entered, num_date_time_rejected, num_timeout_errors, num_skipped_close_to_12
 
     load_dotenv(override=True)
     USERNAME = os.getenv("USERNAME")
@@ -368,7 +371,7 @@ def run(playwright: Playwright, num_entered, num_date_time_rejected,
 
 
             entered_cell = str(df['entered?'][current_row])
-            if entered_cell == '✅' or entered_cell == '✔️':
+            if entered_cell == '✅' or entered_cell == '✔️' or entered_cell == 'YES':
                 logging.info(f"Skipped: Row {current_row + 1} - Entry already entered. Status is: {entered_cell}")
                 continue
 
@@ -469,7 +472,8 @@ def run(playwright: Playwright, num_entered, num_date_time_rejected,
                 page.get_by_text("Attendance has been Saved.").click(timeout=8000)
                 logging.info(f"Successfully entered: Row {current_row + 1}")
                 record_feedback(message='✅', current_row=current_row)
-                record_attend_hrs(page, current_row, KAERS_ID)
+                if hours_after_entry_col_exists:
+                    record_attend_hrs(page, current_row, KAERS_ID)
                 num_entered += 1
             except PwTimeoutError:
                 if page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_customValidatorAttendDate\"]").is_visible():
@@ -515,9 +519,7 @@ def run(playwright: Playwright, num_entered, num_date_time_rejected,
 
 
 with sync_playwright() as playwright:
-    run(playwright, num_entered, num_date_time_rejected,
-        num_timeout_errors, num_skipped_close_to_12)
+    run(playwright)
 
 
-process_finished_analysis(df, num_entered, num_date_time_rejected,
-                          num_timeout_errors, num_skipped_close_to_12)
+process_finished_analysis(df)
