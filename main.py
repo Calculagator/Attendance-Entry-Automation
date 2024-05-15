@@ -241,7 +241,7 @@ def process_finished_analysis(df: pd.DataFrame):
     """Logs automation's performance data such as number of rows entered, errors, etc."""
     global num_entered, num_date_time_rejected, num_timeout_errors, num_skipped_close_to_12
     total_rows = df['KAERS ID'].count()
-    num_rows_attempted = total_rows - WelcWin.row_start + 2
+    num_rows_attempted = total_rows - WelcWin.row_start
 
     logging.info(f"\nAttendance entry complete - Rows entered: {num_entered} | Rows attempted: {num_rows_attempted}\n"
                  f"Date/Time rejected: {num_date_time_rejected} | Timeout errors: {num_timeout_errors} | Skipped over 12 hrs: {num_skipped_close_to_12}")
