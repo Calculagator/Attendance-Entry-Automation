@@ -480,7 +480,8 @@ def run(playwright: Playwright) -> None:
                     enroll_date = page.locator("#MainContent_lblEnrollmentDate").inner_text()
                     logging.warning(f"Date/time rejected: Row {current_row + 1}")
                     record_feedback(message=f'Date/time rejected | Enrolled: {enroll_date}', current_row=current_row)
-                    record_attend_hrs(page, current_row, KAERS_ID)
+                    if hours_after_entry_col_exists:
+                        record_attend_hrs(page, current_row, KAERS_ID)
                     num_date_time_rejected += 1
                 else:
                     logging.warning(f"Error: Row {current_row + 1} - something went wrong")
