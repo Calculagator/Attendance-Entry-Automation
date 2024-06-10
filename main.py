@@ -356,10 +356,12 @@ def run(playwright: Playwright) -> None:
 
 
             KAERS_ID = df['KAERS ID'][current_row]
+            FIRST_NAME = df['First Name'][current_row]
+            LAST_NAME = df['Last Name'][current_row]
             
 
             if pd.isna(df['KAERS ID'][current_row]) or len(str(KAERS_ID)) != 7:
-                if pd.isna(df['First Name'][current_row]) and pd.isna(df['Last Name'][current_row]):
+                if pd.isna(FIRST_NAME) and pd.isna(LAST_NAME):
                     logging.info(f'Blank row found. Program stopped. Row {current_row}\n')
                     break
                 else:
