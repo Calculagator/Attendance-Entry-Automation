@@ -1,3 +1,4 @@
+import gspread.utils
 from playwright.sync_api import Playwright, sync_playwright, TimeoutError as PwTimeoutError
 from dotenv import load_dotenv
 import os
@@ -466,6 +467,10 @@ def run(playwright: Playwright) -> None:
                     record_feedback(message="Error: Enrolled somewhere else?", current_row=current_row)
                     continue
             # page.get_by_role("cell", name="Approve :", exact=True).click()
+
+            if hours_after_entry_col_exists and would_get_over_12_hrs(page, KAERS_ID, current_row):
+                cell_to_color = gspread.utils.rowcol_to_a1(current_row + 2, HOURS_AFTER_ENTRY_COLUMN)
+                ws.format(cell_to_color, {"backgroundColorStyle": {"red": 5.0,"green": 252.0,"blue": 71.0}})
 
             page.get_by_role("button", name="Save").click()
             time.sleep(1)
