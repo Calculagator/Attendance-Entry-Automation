@@ -470,7 +470,7 @@ def run(playwright: Playwright) -> None:
 
             if hours_after_entry_col_exists and would_get_over_12_hrs(page, KAERS_ID, current_row):
                 cell_to_color = gspread.utils.rowcol_to_a1(current_row + 2, HOURS_AFTER_ENTRY_COLUMN)
-                ws.format(cell_to_color, {"backgroundColorStyle": {"red": 5.0,"green": 252.0,"blue": 71.0}})
+                ws.format(cell_to_color, {"backgroundColor": {"red": 0.039,"green": 0.941,"blue": 0.376}})
 
             page.get_by_role("button", name="Save").click()
             time.sleep(1)
