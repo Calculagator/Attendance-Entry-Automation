@@ -476,7 +476,7 @@ def run(playwright: Playwright) -> None:
             time.sleep(1)
 
             try:
-                page.get_by_text("Attendance has been Saved.").click(timeout=8000)
+                page.get_by_text("Attendance has been Saved.").click()
                 logging.info(f"Successfully entered: Row {current_row + 1}")
                 record_feedback(message='✅', current_row=current_row)
                 if hours_after_entry_col_exists:
