@@ -25,7 +25,7 @@ class WelcomeWindow:
 
         self.attend_type = None
         self.row_start = None
-        self.welcome_label = customtkinter.CTkLabel(master=frame, text="Welcome to the Attendance\n Entry Program!",
+        self.welcome_label = customtkinter.CTkLabel(master=frame, text="Attendance Entry Program",
                                                     font=("Roboto", 14, "bold"))
         self.welcome_label.grid(row=0, column=2, pady=15)
         self.type_label = customtkinter.CTkLabel(master=frame, text="Attendance type:")
@@ -106,7 +106,7 @@ class SelectSheetWindow:
             button.grid(row=row, column=column, sticky=W, padx=50, pady=5)
             row += 1
 
-        self.start_button = customtkinter.CTkButton(master=self.frame, text="Next", command=self.sheet_selected_check)
+        self.start_button = customtkinter.CTkButton(master=self.frame, text="START", command=self.sheet_selected_check)
         self.start_button.grid(row=9, column=2, pady=10)
 
     def sheet_selected_check(self):
@@ -127,29 +127,29 @@ def on_close():
         sys.exit()
 
 
-def estimate_completion_time(df):
-    num_of_entries = df['KAERS ID'].count()
-    print("Num of entries: ", num_of_entries)
-    rate = 120
-    estimated_time = (num_of_entries - WelcWin.row_start + 1) / rate
+# def estimate_completion_time(df):
+#     num_of_entries = df['KAERS ID'].count()
+#     print("Num of entries: ", num_of_entries)
+#     rate = 120
+#     estimated_time = (num_of_entries - WelcWin.row_start + 1) / rate
 
-    if estimated_time < 1:
-        hours = 0
-        minutes = 60 * (estimated_time % 1)
-    else:
-        hours = estimated_time
-        minutes = 60 * (hours % 1)
+#     if estimated_time < 1:
+#         hours = 0
+#         minutes = 60 * (estimated_time % 1)
+#     else:
+#         hours = estimated_time
+#         minutes = 60 * (hours % 1)
 
-    add_time = timedelta(hours=hours, minutes=minutes)
-    estimate_finish_time = (datetime.now() + add_time).strftime("%H:%M")
+#     add_time = timedelta(hours=hours, minutes=minutes)
+#     estimate_finish_time = (datetime.now() + add_time).strftime("%H:%M")
 
-    yes_no_box = tkinter.messagebox.askyesno(title="Estimated Time",
-                                             message=f"This process is estimated to finish at {estimate_finish_time}.\n\n"
-                                                     f"Start the program?")
-    if not yes_no_box:
-        sys.exit()
+#     yes_no_box = tkinter.messagebox.askyesno(title="Estimated Time",
+#                                              message=f"This process is estimated to finish at {estimate_finish_time}.\n\n"
+#                                                      f"Start the program?")
+#     if not yes_no_box:
+#         sys.exit()
 
-    return estimate_finish_time
+#     return estimate_finish_time
 
 
 def record_feedback(message: str, current_row: int):
@@ -304,12 +304,12 @@ try:
 except KeyError:
     hours_after_entry_col_exists = False
 
-estimated_finish_time = estimate_completion_time(df)
+# estimated_finish_time = estimate_completion_time(df)
 
 logging.info(f"\n\n~ {WelcWin.attend_type} Entry ~\n"
              f"File chosen: {wb.title}\n"
-             f"Skip rows that get above 12 hours: {WelcWin.skip_close_to_12}\n"
-             f"Estimated finish time - {estimated_finish_time}\n")
+             f"Skip rows that get above 12 hours: {WelcWin.skip_close_to_12}\n")
+            #  f"Estimated finish time - {estimated_finish_time}\n")
 
 starting_time = datetime.now().strftime("%H:%M")
 
