@@ -478,7 +478,9 @@ def run(playwright: Playwright) -> None:
             try:
                 page.get_by_text("Attendance has been Saved.").click()
                 logging.info(f"Successfully entered: Row {current_row + 1}")
+                time.sleep(.5)
                 record_feedback(message='✅', current_row=current_row)
+                time.sleep(.5)
                 if hours_after_entry_col_exists:
                     record_attend_hrs(page, current_row, KAERS_ID)
                 num_entered += 1
