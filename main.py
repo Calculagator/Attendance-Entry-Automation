@@ -56,11 +56,6 @@ class WelcomeWindow:
         self.google_sheet_url_entry = customtkinter.CTkEntry(master=frame, width=150, font=("Roboto", 13))
         self.google_sheet_url_entry.grid(row=5, column=2)
 
-        self.row_start_label = customtkinter.CTkLabel(master=frame, text="Start at Row ID:")
-        self.row_start_label.grid(row=8, column=1, pady=5)
-        self.row_start_entry = customtkinter.CTkEntry(master=frame, width=150, font=("Roboto", 13))
-        self.row_start_entry.grid(row=8, column=2, pady=5)
-
         self.close_to_12_check = customtkinter.BooleanVar(value=False)
         self.close_to_12_checkbox = customtkinter.CTkCheckBox(master=frame, text="Skip students that would get above 12 hrs?", variable=self.close_to_12_check,
                                                            onvalue=True, offvalue=False)
@@ -77,7 +72,6 @@ class WelcomeWindow:
 
     def get_entries(self):
         self.attend_type = self.radio_state.get()
-        self.row_start = int(self.row_start_entry.get()) - 1
         self.url = self.google_sheet_url_entry.get()
         self.skip_close_to_12 = self.close_to_12_check.get()
         # self.should_enter_test_orientation = self.enter_test_orientation_check.get()
@@ -118,12 +112,19 @@ class SelectSheetWindow:
             button.grid(row=row, column=column, sticky=W, padx=50, pady=5)
             row += 1
 
+        self.row_start_label = customtkinter.CTkLabel(master=self.frame, text="Start at Row ID:")
+        self.row_start_label.grid(row=9, column=0, pady=10)
+
+        self.row_start_entry = customtkinter.CTkEntry(master=self.frame, width=150, font=("Roboto", 13))
+        self.row_start_entry.grid(row=9, column=1, pady=10)
+
         self.start_button = customtkinter.CTkButton(master=self.frame, text="START", command=self.sheet_selected_check)
-        self.start_button.grid(row=9, column=2, pady=10)
+        self.start_button.grid(row=10, column=2, pady=10)
 
     def sheet_selected_check(self):
         """Checks if a sheet was chosen. If not, displays "Oops" message box. Otherwise, saves selected sheet as variable."""
         self.ws = self.radio_state.get()
+        self.row_start = int(self.row_start_entry.get()) - 1
         if self.ws == "None":
             tkinter.messagebox.showinfo(title="Oops!", message="Please select a sheet.")
         else:
@@ -371,8 +372,8 @@ def run(playwright: Playwright) -> None:
     time.sleep(8)
 
 
-    if WelcWin.row_start:
-        current_row = WelcWin.row_start
+    if sheet_window.row_start:
+        current_row = sheet_window.row_start
     else:
         current_row = 0
 
