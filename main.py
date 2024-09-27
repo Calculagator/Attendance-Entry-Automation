@@ -19,6 +19,10 @@ class WouldGetOver12HoursException(Exception):
     """Raised if adding the current row's attendance would get the student above 12 hours."""
 
 
+class TestOrientationAlreadyEnteredException(Exception):
+    """Raised if their test attendance hours (Orientation/Intake) has already been entered in KAERS."""
+
+
 class WelcomeWindow:
 
     def __init__(self):
@@ -34,6 +38,7 @@ class WelcomeWindow:
         self.options = [
             "Live Attendance",
             "Distance Learning",
+            "Orientation/Intake",
             "CCN - Personal Contact"
         ]
 
@@ -61,6 +66,11 @@ class WelcomeWindow:
                                                            onvalue=True, offvalue=False)
         self.close_to_12_checkbox.grid(row=9, column=2, pady=5)
 
+        # self.enter_test_orientation_check = customtkinter.BooleanVar(value=False)
+        # self.enter_test_orientation_checkbox = customtkinter.CTkCheckBox(master=frame, text="Is this Orientation/Intake attendance?", variable=self.enter_test_orientation_check,
+        #                                                    onvalue=True, offvalue=False)
+        # self.enter_test_orientation_checkbox.grid(row=10, column=2, pady=5)
+
         self.start_button = customtkinter.CTkButton(master=frame, text="Next", font=("Roboto", 14),
                                                     command=self.fields_completed_check)
         self.start_button.grid(row=10, column=2, pady=20)
@@ -70,7 +80,9 @@ class WelcomeWindow:
         self.row_start = int(self.row_start_entry.get()) - 1
         self.url = self.google_sheet_url_entry.get()
         self.skip_close_to_12 = self.close_to_12_check.get()
-        print(f'Skip getting students past 12 = {self.skip_close_to_12}')
+        # self.should_enter_test_orientation = self.enter_test_orientation_check.get()
+        print(f'Skip getting students past 12? -> {self.skip_close_to_12}')
+        # print(f'Enter test/orientation hours? -> {self.should_enter_test_orientation}')
 
     def fields_completed_check(self):
         """If any field is empty, gives a messagebox. If all fields are filled, gathers user's selections and closes window."""
@@ -208,13 +220,31 @@ def un_separate(page: Playwright, KAERS_ID: str):
     time.sleep(8)
 
 
+def check_if_test_orientation_entered(page: Playwright, KAERS_ID: float) -> bool:
+    try:
+        page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rgAttendance_ctl00_ctl03_ctl01_PageSizeComboBox_Arrow\"]").click(timeout=5000)
+        time.sleep(1)
+        page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rgAttendance_ctl00_ctl03_ctl01_PageSizeComboBox_DropDown\"]").get_by_text("50").click()
+        time.sleep(5)
+        page.get_by_role("button", name="Last Page").click(timeout=10000)
+    except PwTimeoutError:
+        pass
+    
+    try:
+        page.get_by_role("cell", name="Orientation/Intake").first.click(timeout=5000)
+        time.sleep(5)
+        return True
+    except (PwTimeoutError):
+        return False
+
+
 def would_get_over_12_hrs(page: Playwright, KAERS_ID: float, current_row: int) -> bool:
     """Pulls student's attendance hours from KAERS. Returns boolean of whether adding
        the current row's attendance would get the student above 12 hours."""
     current_attend_hours = float(page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_lblHrS\"]").inner_text(timeout=5000))
     logging.info(f"Row {current_row + 1} - Current attendance hours: {current_attend_hours}")
 
-    if WelcWin.attend_type == "Live Attendance":
+    if WelcWin.attend_type == "Live Attendance" or WelcWin.attend_type == "Orientation/Intake":
         start_time = datetime.strptime(str(df['Start Time'][current_row]).strip(), "%H:%M")
         end_time = datetime.strptime(str(df['End Time'][current_row]).strip(), "%H:%M")
 
@@ -427,6 +457,10 @@ def run(playwright: Playwright) -> None:
             page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=20000)
             time.sleep(1)
 
+            if WelcWin.attend_type == 'Orientation/Intake':
+                if check_if_test_orientation_entered(page, KAERS_ID):
+                    raise TestOrientationAlreadyEnteredException
+
             if WelcWin.skip_close_to_12:
                 if would_get_over_12_hrs(page, KAERS_ID, current_row):
                     raise WouldGetOver12HoursException
@@ -440,14 +474,13 @@ def run(playwright: Playwright) -> None:
             page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=3000)
             time.sleep(1)
            
-            if WelcWin.attend_type == "Live Attendance":
+            if WelcWin.attend_type == "Live Attendance" or WelcWin.attend_type == "Orientation/Intake":
                 start_time = str(df['Start Time'][current_row])
                 end_time = str(df['End Time'][current_row])
                 page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rtpStartTime_dateInput\"]").click()
                 page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rtpStartTime_dateInput\"]").fill(start_time)
                 page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rtpEndTime_dateInput\"]").click()
                 page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rtpEndTime_dateInput\"]").fill(end_time)
-           
             else:
                 product = str(df['Product'][current_row])
                 total_time = str(df['Total Time'][current_row])
@@ -500,6 +533,11 @@ def run(playwright: Playwright) -> None:
         except exceptions.APIError as err:
             logging.error(f"{err} - Error: Row {current_row + 1} | Something went wrong on Google's end")
             record_feedback(message="Error: Something went wrong on Google's end", current_row=current_row)
+
+
+        except TestOrientationAlreadyEnteredException as err:
+            logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Orientation/Intake already entered")
+            record_feedback(message='Skipped (Orientation/Intake already entered)', current_row=current_row)
 
 
         except WouldGetOver12HoursException as err:
