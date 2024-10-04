@@ -447,16 +447,21 @@ def run(playwright: Playwright) -> None:
                     record_feedback(message=f'{enroll_status} - could not un-separate', current_row=current_row)
                     continue
 
-            try:
-                page.get_by_text("This client is not enrolled in your location. Contact the enrollment location fo").click(timeout=2000)
-                logging.warning(f"Row {current_row +1} - enrolled somewhere else")
-                record_feedback(message='Error: Enrolled somewhere else', current_row=current_row)
-                continue
-            except PwTimeoutError:
-                pass
+            # try:
+            #     page.get_by_text("This client is not enrolled in your location. Contact the enrollment location fo").click(timeout=2000)
+            #     logging.warning(f"Row {current_row +1} - enrolled somewhere else")
+            #     record_feedback(message='Error: Enrolled somewhere else', current_row=current_row)
+            #     continue
+            # except PwTimeoutError:
+            #     pass
 
             page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=20000)
             time.sleep(1)
+
+            if page.get_by_text("This client is not enrolled in your location. Contact the enrollment location fo").is_visible():
+                logging.warning(f"Row {current_row +1} - enrolled somewhere else")
+                record_feedback(message='Error: Enrolled somewhere else', current_row=current_row)
+                continue
 
             if WelcWin.attend_type == 'Orientation/Intake':
                 if check_if_test_orientation_entered(page, KAERS_ID):
