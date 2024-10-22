@@ -269,14 +269,14 @@ def record_attend_hrs(page: Playwright, current_row: int, KAERS_ID: float):
     ws.update_cell(current_row + 2, HOURS_AFTER_ENTRY_COLUMN, f'{current_attend_hours}')
 
 
-def process_finished_analysis(df: pd.DataFrame):
-    """Logs automation's performance data such as number of rows entered, errors, etc."""
-    global num_entered, num_date_time_rejected, num_timeout_errors, num_skipped_close_to_12
-    total_rows = df['KAERS ID'].count()
-    num_rows_attempted = total_rows - WelcWin.row_start
+# def process_finished_analysis(df: pd.DataFrame):
+#     """Logs automation's performance data such as number of rows entered, errors, etc."""
+#     global num_entered, num_date_time_rejected, num_timeout_errors, num_skipped_close_to_12
+#     total_rows = df['KAERS ID'].count()
+#     num_rows_attempted = total_rows - WelcWin.row_start
 
-    logging.info(f"\nAttendance entry complete - Rows entered: {num_entered} | Rows attempted: {num_rows_attempted}\n"
-                 f"Date/Time rejected: {num_date_time_rejected} | Timeout errors: {num_timeout_errors} | Skipped over 12 hrs: {num_skipped_close_to_12}")
+#     logging.info(f"\nAttendance entry complete - Rows entered: {num_entered} | Rows attempted: {num_rows_attempted}\n"
+#                  f"Date/Time rejected: {num_date_time_rejected} | Timeout errors: {num_timeout_errors} | Skipped over 12 hrs: {num_skipped_close_to_12}")
 
 
 # Opens Welcome Window: user selects attendance type, enters Google Sheet url, row ID to start on, and whether to skip getting students above 12 hrs
@@ -576,4 +576,4 @@ with sync_playwright() as playwright:
     run(playwright)
 
 
-process_finished_analysis(df)
+# process_finished_analysis(df)
