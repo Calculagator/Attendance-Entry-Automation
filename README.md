@@ -36,13 +36,13 @@ Now we'll head back to Visual Studio Code.
 The automation is all set up now. You're ready to go. 🙂
 
 ## How to use the Automation
-### What You'll Need
+### 📄 What You'll Need
 - Visual Studio Code open
 - The Attendance-Entry-Automation folder open in Visual Studio Code
 - The attendance spreadsheet Google Sheet you want to enter open in your web browser. (The spreadsheet must be uploaded to Google Drive for the automation to work).
 - Your Google Sheets API email
 
-### Share the Attendance Spreadsheet with your Sheets API
+### 🖇️ Share the Attendance Spreadsheet with your Sheets API
 1. Copy your Google Sheets API email.
 2. Share your attendance spreadsheet Google Sheet with your API email.
    - Open your spreadsheet in Sheets
