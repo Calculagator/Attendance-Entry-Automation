@@ -35,23 +35,32 @@ Now we'll head back to Visual Studio Code.
 
 The automation is all set up now. You're ready to go. 🙂
 
-## ⚙️ Using the Automation
+## How to use the Automation
 ### What You'll Need
 - Visual Studio Code open
 - The Attendance-Entry-Automation folder open in Visual Studio Code
 - The attendance spreadsheet Google Sheet you want to enter open in your web browser. (The spreadsheet must be uploaded to Google Drive for the automation to work).
 - Your Google Sheets API email
+
+### ⚙️ Turn On the Automation
 1. With the Attendance-Entry-Automation folder open in Visual Studio Code, select and run the `main.py` file (click the triangle Play button on the right, or right-click `main.py` and choose "Run Python File in Terminal").
-2. A window should appear with several options.
+2. A window will appear with several options.
    -Select the type of attendance (live attendance, distance learning, etc.)
-   -Go to the attendance spreadsheet in Google Sheets, copy the URL, and paste it into the automation window box "Google Sheet URL:"
+   -Go to the attendance spreadsheet in Google Sheets, copy the entire URL, and paste it into the automation window box labelled "Google Sheet URL:"
    -You have the option to check yes/no if you want to manage attendance for students under 12 hours
    -Click OK
-3. A second window should appear.
+3. A second window will appear.
    -Choose the tab from that spreadsheet you want to enter (they're usually named "Live Attendance" or "Distance Learning")
    -Enter the Row ID
+       - If you're starting from the top (i.e., you want to run the whole report), type 1.
+       - If you're wanting to start somewhere else in the report, just type the Row ID number of where you want to start.
+       - Make sure you enter the Row ID number (look in the "Row ID" column) and not the row number
+   -Click START
+4. The automation will open a browser window, log in to KAERS using the credentials you specified in the `.env` file, and begin entering attendance.
+5. The automation will write on the attendance spreadsheet Google Sheet under the "entered?" column as it goes, so its progress can be seen in real-time.
 
-
+### 🏁 When the Automation finishes
+When the automation is done, just go to the attendance spreadsheet in Google Sheets. The results are in the entered? column.
 
 
 
