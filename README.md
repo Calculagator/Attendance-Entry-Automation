@@ -41,4 +41,19 @@ The automation is all set up now. You're ready to go. 🙂
 - The Attendance-Entry-Automation folder open in Visual Studio Code
 - The attendance spreadsheet Google Sheet you want to enter open in your web browser. (The spreadsheet must be uploaded to Google Drive for the automation to work).
 - Your Google Sheets API email
-1. 
+1. With the Attendance-Entry-Automation folder open in Visual Studio Code, select and run the `main.py` file (click the triangle Play button on the right, or right-click `main.py` and choose "Run Python File in Terminal").
+2. A window should appear with several options.
+   -Select the type of attendance (live attendance, distance learning, etc.)
+   -Go to the attendance spreadsheet in Google Sheets, copy the URL, and paste it into the automation window box "Google Sheet URL:"
+   -You have the option to check yes/no if you want to manage attendance for students under 12 hours
+   -Click OK
+3. A second window should appear.
+   -Choose the tab from that spreadsheet you want to enter (they're usually named "Live Attendance" or "Distance Learning")
+   -Enter the Row ID
+
+
+
+
+
+
+
