@@ -4,10 +4,10 @@
 ### Google Sheets
 This automation connects directly to Google Sheets.
 1. Before you start, make sure you're logged into a *personal Gmail* account. Using your work email will cause some hiccups.
-2. Follow the instructions in this video from 1:50 - 6:50.
-    - If you are required to select an organization, make sure you're logged into a *personal Gmail* account.
+2. Follow the instructions in [this video](https://youtu.be/zCEJurLGFRk?t=110) only from 1:50 - 6:50. (The sections you need to watch are titled "Google Cloud Setup" and "Generating a Service Account".)
+    - If you're required to select an organization, make sure you're logged into a *personal Gmail* account.
     - As said in the video, do not share the credentials file with others.
-3. 
+3. For the credentials file you downloaded, make sure you rename it as `credentials.json`.
 
 1. Clone the repo to your machine.
 2. Open a code editor such as Visual Studio Code. You may instead use PowerShell (Windows) or Terminal (Mac).
