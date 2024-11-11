@@ -42,7 +42,7 @@ The automation is all set up now. You're ready to go. 🙂
 - The attendance spreadsheet Google Sheet you want to enter open in your web browser. (The spreadsheet must be uploaded to Google Drive for the automation to work).
 - Your Google Sheets API email
 
-### 🖇️ Share the Attendance Spreadsheet with your Sheets API
+### 🖇️ 1. Share the Attendance Spreadsheet with your Sheets API
 1. Copy your Google Sheets API email.
 2. Share your attendance spreadsheet Google Sheet with your API email.
    - Open your spreadsheet in Sheets
@@ -52,7 +52,7 @@ The automation is all set up now. You're ready to go. 🙂
    - Click Send
        - If a warning appears, click Share Anyway
 
-### ⚙️ Turn On the Automation
+### ⚙️ 2. Turn On the Automation
 1. With the Attendance-Entry-Automation folder open in Visual Studio Code, select and run the `main.py` file (click the triangle Play button on the right, or right-click `main.py` and choose "Run Python File in Terminal").
 2. A window will appear with several options.
    - Select the type of attendance (live attendance, distance learning, etc.)
