@@ -12,7 +12,7 @@ Before we continue, we need to set up our connection to Google Sheets.
 5. Follow the instructions in [this video](https://youtu.be/zCEJurLGFRk?t=110) only from 1:50 - 6:50. (The sections you need to watch are titled "Google Cloud Setup" and "Generating a Service Account".)
     - If you're required to select an organization, make sure you're logged into a *personal Gmail* account.
     - As said in the video, do not share the credentials file with others.
-    - ⭐⭐I highly recommend **bookmarking the webpage** that has your API's email so you can quickly pull it up. You'll need that email everytime you use the automation.
+    - ⭐⭐I highly recommend **bookmarking the webpage** that has your API's email so you can quickly pull it up. You'll need that email everytime you want the automation to run a new sheet.
 6. For the credentials file you downloaded, make sure you rename it as `credentials.json`.
 
 Now we'll head back to Visual Studio Code.
@@ -41,6 +41,16 @@ The automation is all set up now. You're ready to go. 🙂
 - The Attendance-Entry-Automation folder open in Visual Studio Code
 - The attendance spreadsheet Google Sheet you want to enter open in your web browser. (The spreadsheet must be uploaded to Google Drive for the automation to work).
 - Your Google Sheets API email
+
+### Share the Attendance Spreadsheet with your Sheets API
+1. Copy your Google Sheets API email.
+2. Share your attendance spreadsheet Google Sheet with your API email
+   -Open your spreadsheet in Sheets
+   -Just like you'd share a file with a coworker, on the right click Share and paste your API email
+       -Make sure "Editor" is selected as the role
+       -The Notify checkbox isn't important
+   -Click Send
+       -If a warning appears, click Share Anyway
 
 ### ⚙️ Turn On the Automation
 1. With the Attendance-Entry-Automation folder open in Visual Studio Code, select and run the `main.py` file (click the triangle Play button on the right, or right-click `main.py` and choose "Run Python File in Terminal").
