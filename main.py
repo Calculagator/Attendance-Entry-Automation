@@ -13,6 +13,7 @@ import gspread
 from gspread import exceptions
 from google.oauth2.service_account import Credentials
 import re
+from openpyxl import load_workbook
 
 
 class WouldGetOver12HoursException(Exception):
@@ -61,6 +62,16 @@ class WelcomeWindow:
                                                            onvalue=True, offvalue=False)
         self.close_to_12_checkbox.grid(row=9, column=2, pady=5)
 
+        # self.spreadsheet_label = customtkinter.CTkLabel(master=frame, text="Students to\nbypass 12 hr skip")
+        # self.spreadsheet_label.grid(row=10, column=1)
+
+        # self.chosen_sheet_label = customtkinter.CTkLabel(master=frame, text="[file name will display here]")
+        # self.chosen_sheet_label.grid(row=10, column=2)
+
+        # self.choose_file_button = customtkinter.CTkButton(master=frame, width=100, text="Choose file",
+        #                                                   command=self.choose_file)
+        # self.choose_file_button.grid(row=10, column=3)
+
         # self.enter_test_orientation_check = customtkinter.BooleanVar(value=False)
         # self.enter_test_orientation_checkbox = customtkinter.CTkCheckBox(master=frame, text="Is this Orientation/Intake attendance?", variable=self.enter_test_orientation_check,
         #                                                    onvalue=True, offvalue=False)
@@ -68,7 +79,16 @@ class WelcomeWindow:
 
         self.start_button = customtkinter.CTkButton(master=frame, text="Next", font=("Roboto", 14),
                                                     command=self.fields_completed_check)
-        self.start_button.grid(row=10, column=2, pady=20)
+        self.start_button.grid(row=11, column=2, pady=20)
+
+    # def choose_file(self):
+    #     self.file_path = filedialog.askopenfilename(
+    #         initialdir="C:\\Users",
+    #         title="Choose a spreadsheet",
+    #         filetypes=(("Excel Files", "*.xlsx*"),))
+    #     if self.file_path:
+    #         self.file_name = os.path.basename(self.file_path)
+    #         self.chosen_sheet_label.configure(text=f"{self.file_name}")
 
     def get_entries(self):
         self.attend_type = self.radio_state.get()
@@ -130,6 +150,31 @@ class SelectSheetWindow:
         else:
             print(self.ws)
             window.destroy()
+
+
+def ask_if_have_MSG_list() -> bool:
+    valid_response = False
+    while valid_response == False:
+        have_MSG_list = str.upper(input("Do you have a list of students who you want to get above 12 hrs?\nPlease type Y or N and push Enter: "))
+        if (have_MSG_list == 'Y' or have_MSG_list == 'N'):
+            valid_response = True
+    
+    if have_MSG_list == 'Y':
+        return True
+    else:
+        return False
+
+
+def get_MSG_student_list() -> list:
+    file_path = filedialog.askopenfilename(
+                initialdir="C:\\Users",
+                title="Choose a spreadsheet",
+                filetypes=(("Excel Files", "*.xlsx*"),))
+
+    students_to_enter_df = pd.read_excel(file_path, 'Sheet1')
+    students_to_enter_list = students_to_enter_df['KAERS ID'].fillna(0).astype(int).tolist()
+
+    return students_to_enter_list
 
 
 def on_close():
@@ -306,6 +351,12 @@ wb = client.open_by_key(wb_id)
 
 tabs = list(map(lambda x: x.title, wb.worksheets()))
 
+MSG_student_list = []
+
+if ask_if_have_MSG_list():
+    MSG_student_list = get_MSG_student_list()
+
+
 # Opens Select Sheet Window; user selects sheet to use within the spreadsheet
 window = CTk()
 window.title("Select sheet")
@@ -468,7 +519,7 @@ def run(playwright: Playwright) -> None:
                     raise TestOrientationAlreadyEnteredException
 
             if WelcWin.skip_close_to_12:
-                if would_get_over_12_hrs(page, KAERS_ID, current_row):
+                if would_get_over_12_hrs(page, KAERS_ID, current_row) and KAERS_ID not in MSG_student_list:
                     raise WouldGetOver12HoursException
 
             attendance_type = str.title(df['Attendance Type'][current_row])
