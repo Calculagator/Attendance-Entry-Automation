@@ -152,20 +152,23 @@ class SelectSheetWindow:
             window.destroy()
 
 
-def ask_if_have_MSG_list() -> bool:
+def user_has_MSG_list() -> bool:
+    """Asks if user has an Excel file of MSG students. User replies 'Y' or 'N'."""
     valid_response = False
     while valid_response == False:
-        have_MSG_list = str.upper(input("Do you have a list of students who you want to get above 12 hrs?\nPlease type Y or N and push Enter: "))
-        if (have_MSG_list == 'Y' or have_MSG_list == 'N'):
+        has_MSG_list = str.upper(input("Do you have a list of students who you want to get above 12 hrs?\nPlease type Y or N and push Enter: "))
+        if (has_MSG_list == 'Y' or has_MSG_list == 'N'):
             valid_response = True
     
-    if have_MSG_list == 'Y':
+    if has_MSG_list == 'Y':
         return True
     else:
         return False
 
 
 def get_MSG_student_list() -> list:
+    """User chooses Excel file of MSG students. Converts KAERS ID column to a list.
+    The desired tab in the Excel file must be named 'Sheet1'."""
     file_path = filedialog.askopenfilename(
                 initialdir="C:\\Users",
                 title="Choose a spreadsheet",
@@ -353,7 +356,7 @@ tabs = list(map(lambda x: x.title, wb.worksheets()))
 
 MSG_student_list = []
 
-if ask_if_have_MSG_list():
+if user_has_MSG_list():
     MSG_student_list = get_MSG_student_list()
 
 
