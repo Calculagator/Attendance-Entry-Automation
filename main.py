@@ -182,7 +182,6 @@ def get_MSG_student_list() -> list:
 
 def on_close():
     """If user clicks close button, gives warning message about closing program."""
-    # TODO: focus on No button (right now it focuses on Yes)
     close = tkinter.messagebox.askokcancel(title="Close", message="Would you like to close the program?")
     if close:
         sys.exit()
