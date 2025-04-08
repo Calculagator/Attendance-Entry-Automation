@@ -58,7 +58,7 @@ class WelcomeWindow:
         self.google_sheet_url_entry.grid(row=5, column=2)
 
         self.close_to_12_check = customtkinter.BooleanVar(value=False)
-        self.close_to_12_checkbox = customtkinter.CTkCheckBox(master=frame, text="Skip students that would get above 12 hrs?", variable=self.close_to_12_check,
+        self.close_to_12_checkbox = customtkinter.CTkCheckBox(master=frame, text="Managed attendance?", variable=self.close_to_12_check,
                                                            onvalue=True, offvalue=False)
         self.close_to_12_checkbox.grid(row=9, column=2, pady=5)
 
