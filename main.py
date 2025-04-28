@@ -358,6 +358,8 @@ MSG_student_list = []
 if user_has_MSG_list():
     MSG_student_list = get_MSG_student_list()
 
+if WelcWin.skip_close_to_12:
+    DESIRED_PARTICIPANTS_TO_ADD = int(input("How many participants do you want to add? "))
 
 # Opens Select Sheet Window; user selects sheet to use within the spreadsheet
 window = CTk()
@@ -412,6 +414,8 @@ def run(playwright: Playwright) -> None:
     page = context.new_page()
     global num_entered, num_date_time_rejected, num_timeout_errors, num_skipped_close_to_12
 
+    non_MSG_participants_added = 0
+
     load_dotenv(override=True)
     USERNAME = os.getenv("USERNAME")
     PASSWORD = os.getenv("PASSWORD")
@@ -444,6 +448,10 @@ def run(playwright: Playwright) -> None:
             FIRST_NAME = df['First Name'][current_row]
             LAST_NAME = df['Last Name'][current_row]
             
+            if non_MSG_participants_added < DESIRED_PARTICIPANTS_TO_ADD:
+                add_participant_anyway = True
+            else:
+                add_participant_anyway = False
 
             if pd.isna(df['KAERS ID'][current_row]) or len(str(KAERS_ID)) != 7:
                 if pd.isna(FIRST_NAME) and pd.isna(LAST_NAME):
@@ -521,7 +529,9 @@ def run(playwright: Playwright) -> None:
                     raise TestOrientationAlreadyEnteredException
 
             if WelcWin.skip_close_to_12:
-                if would_get_over_12_hrs(page, KAERS_ID, current_row) and KAERS_ID not in MSG_student_list:
+                if would_get_over_12_hrs(page, KAERS_ID, current_row) and KAERS_ID not in MSG_student_list and add_participant_anyway:
+                    pass
+                elif would_get_over_12_hrs(page, KAERS_ID, current_row) and KAERS_ID not in MSG_student_list:
                     raise WouldGetOver12HoursException
 
             attendance_type = str.title(df['Attendance Type'][current_row])
@@ -560,7 +570,17 @@ def run(playwright: Playwright) -> None:
                     continue
             # page.get_by_role("cell", name="Approve :", exact=True).click()
 
-            if hours_after_entry_col_exists and would_get_over_12_hrs(page, KAERS_ID, current_row):
+            # if adding non-MSG student, colors pink
+            # if adding MSG student, colors green
+            if hours_after_entry_col_exists and would_get_over_12_hrs(page, KAERS_ID, current_row) and add_participant_anyway and KAERS_ID not in MSG_student_list:
+                non_MSG_participants_added += 1
+                logging.info(f"""Non-MSG student added - Row {current_row + 1} - {LAST_NAME}, {FIRST_NAME}, {KAERS_ID}\\
+                                 Total non-MSG students added: {non_MSG_participants_added}""")
+                print(f"""Non-MSG student added - Row {current_row + 1} - {LAST_NAME}, {FIRST_NAME}, {KAERS_ID}\\
+                          Total non-MSG students added: {non_MSG_participants_added}""")
+                cell_to_color = gspread.utils.rowcol_to_a1(current_row + 2, HOURS_AFTER_ENTRY_COLUMN)
+                ws.format(cell_to_color, {"backgroundColor": {"red": 1,"green": 0.463,"blue": 0.925}})
+            elif hours_after_entry_col_exists and would_get_over_12_hrs(page, KAERS_ID, current_row):
                 cell_to_color = gspread.utils.rowcol_to_a1(current_row + 2, HOURS_AFTER_ENTRY_COLUMN)
                 ws.format(cell_to_color, {"backgroundColor": {"red": 0.039,"green": 0.941,"blue": 0.376}})
 
