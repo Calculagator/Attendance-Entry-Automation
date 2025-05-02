@@ -360,6 +360,9 @@ if user_has_MSG_list():
 
 if WelcWin.skip_close_to_12:
     DESIRED_PARTICIPANTS_TO_ADD = int(input("How many participants do you want to add? "))
+    time.sleep(.5)
+else:
+    DESIRED_PARTICIPANTS_TO_ADD = 0
 
 # Opens Select Sheet Window; user selects sheet to use within the spreadsheet
 window = CTk()
@@ -574,9 +577,9 @@ def run(playwright: Playwright) -> None:
             # if adding MSG student, colors green
             if hours_after_entry_col_exists and would_get_over_12_hrs(page, KAERS_ID, current_row) and add_participant_anyway and KAERS_ID not in MSG_student_list:
                 non_MSG_participants_added += 1
-                logging.info(f"""Non-MSG student added - Row {current_row + 1} - {LAST_NAME}, {FIRST_NAME}, {KAERS_ID}\\
+                logging.info(f"""Non-MSG student added - Row {current_row + 1} - {LAST_NAME}, {FIRST_NAME}, {KAERS_ID}
                                  Total non-MSG students added: {non_MSG_participants_added}""")
-                print(f"""Non-MSG student added - Row {current_row + 1} - {LAST_NAME}, {FIRST_NAME}, {KAERS_ID}\\
+                print(f"""Non-MSG student added - Row {current_row + 1} - {LAST_NAME}, {FIRST_NAME}, {KAERS_ID}
                           Total non-MSG students added: {non_MSG_participants_added}""")
                 cell_to_color = gspread.utils.rowcol_to_a1(current_row + 2, HOURS_AFTER_ENTRY_COLUMN)
                 ws.format(cell_to_color, {"backgroundColor": {"red": 1,"green": 0.463,"blue": 0.925}})
