@@ -623,8 +623,8 @@ def run(playwright: Playwright) -> None:
 
 
         except WouldGetOver12HoursException as err:
-            logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Entry would get student above 12 hrs")
-            record_feedback(message='Skipped (entry would get student above 12hrs)', current_row=current_row)
+            logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Entry would get student above 12 hrs (managed attendance)")
+            record_feedback(message='Skipped (managed attendance)', current_row=current_row)
             num_skipped_close_to_12 += 1
 
 
