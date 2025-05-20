@@ -38,7 +38,7 @@ class WelcomeWindow:
 
         self.options = [
             "Live Attendance",
-            "Distance Learning",
+            "Distance Learning/Online Self-Study",
             "Orientation/Intake",
             "CCN - Personal Contact"
         ]
@@ -77,9 +77,9 @@ class WelcomeWindow:
         #                                                    onvalue=True, offvalue=False)
         # self.enter_test_orientation_checkbox.grid(row=10, column=2, pady=5)
 
-        self.start_button = customtkinter.CTkButton(master=frame, text="Next", font=("Roboto", 14),
+        self.next_button = customtkinter.CTkButton(master=frame, text="Next", font=("Roboto", 14),
                                                     command=self.fields_completed_check)
-        self.start_button.grid(row=11, column=2, pady=20)
+        self.next_button.grid(row=11, column=2, pady=20)
 
     # def choose_file(self):
     #     self.file_path = filedialog.askopenfilename(
