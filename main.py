@@ -562,15 +562,15 @@ def run(playwright: Playwright) -> None:
                 page.get_by_role("textbox", name="Total time should not be more than 20 hours!").click()
                 page.get_by_role("textbox", name="Total time should not be more than 20 hours!").fill(total_time)
 
-            if pd.notna(df['Site'][current_row]):
-                site = str(df['Site'][current_row])
-                page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendSite_Arrow\"]").click()
-                try:
-                    page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendSite_DropDown\"]").get_by_text(site).click()
-                except PwTimeoutError:
-                    logging.warning(f"Enrolled somewhere else? Row {current_row + 1}")
-                    record_feedback(message="Error: Enrolled somewhere else?", current_row=current_row)
-                    continue
+            # if pd.notna(df['Site'][current_row]):
+            #     site = str(df['Site'][current_row])
+            #     page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendSite_Arrow\"]").click()
+            #     try:
+            #         page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendSite_DropDown\"]").get_by_text(site).click()
+            #     except PwTimeoutError:
+            #         logging.warning(f"Enrolled somewhere else? Row {current_row + 1}")
+            #         record_feedback(message="Error: Enrolled somewhere else?", current_row=current_row)
+            #         continue
             # page.get_by_role("cell", name="Approve :", exact=True).click()
 
             # if adding non-MSG student, colors pink
