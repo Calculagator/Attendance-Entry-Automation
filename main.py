@@ -286,6 +286,19 @@ def check_if_test_orientation_entered(page: Playwright, KAERS_ID: float) -> bool
         return False
 
 
+def get_program_type(page: Playwright) -> str:
+    program_type = page.locator("#MainContent_lblProgramType").text_content()
+    print(f"Program type: {program_type}")
+    return program_type
+
+
+def is_GED_Ready_No_Initial_Test(page: Playwright) -> bool:
+    if get_program_type(page) == 'GED Ready / No Initial Test':
+        return True
+    else:
+        return False
+
+
 def would_get_over_12_hrs(page: Playwright, KAERS_ID: float, current_row: int) -> bool:
     """Pulls student's attendance hours from KAERS. Returns boolean of whether adding
        the current row's attendance would get the student above 12 hours."""
@@ -531,6 +544,9 @@ def run(playwright: Playwright) -> None:
                 if check_if_test_orientation_entered(page, KAERS_ID):
                     raise TestOrientationAlreadyEnteredException
 
+            if is_GED_Ready_No_Initial_Test(page) and would_get_over_12_hrs(page, KAERS_ID, current_row):
+                raise WouldGetOver12HoursException
+
             if WelcWin.skip_close_to_12:
                 if would_get_over_12_hrs(page, KAERS_ID, current_row) and KAERS_ID not in MSG_student_list and add_participant_anyway:
                     pass
@@ -623,9 +639,9 @@ def run(playwright: Playwright) -> None:
 
 
         except WouldGetOver12HoursException as err:
-            logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Entry would get student above 12 hrs (managed attendance)")
-            record_feedback(message='Skipped (managed attendance)', current_row=current_row)
-            num_skipped_close_to_12 += 1
+            logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Entry would get student above 12 hrs (managed attendance) | Program: {get_program_type(page)}")
+            record_feedback(message=f'Skipped (managed attendance) | Program: {get_program_type(page)}', current_row=current_row)
+            #num_skipped_close_to_12 += 1
 
 
         except PwTimeoutError as err:
