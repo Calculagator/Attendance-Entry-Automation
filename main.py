@@ -24,6 +24,11 @@ class TestOrientationAlreadyEnteredException(Exception):
     """Raised if their test attendance hours (Orientation/Intake) has already been entered in KAERS."""
 
 
+class LastNameNotInKAERSProfileNameException(Exception):
+    """Raised if student's last name isn't in the student's KAERS profile--implies
+    it's the wrong student (wrong ID on attendance sheet)."""
+
+
 class WelcomeWindow:
 
     def __init__(self):
@@ -244,6 +249,20 @@ def create_log(log_path: str) -> str:
     return log_path
 
 
+def get_split_name(page: Playwright) -> str:
+    """Gets full name from student's KAERS profile page and returns a list containing
+    each word in that full name in title (proper) case."""
+    split_name = page.locator("#lblStudentName").text_content().title().split()
+    return split_name
+
+
+def last_name_is_in_full_name(page: Playwright, LAST_NAME: str) -> bool:
+    if LAST_NAME.title() in get_split_name(page):
+        return True
+    else:
+        return False
+
+
 def get_enroll_status(page: Playwright, current_row) -> str:
     """Returns student's enrollment status from profile page.
        If not enrolled, records status."""
@@ -288,7 +307,6 @@ def check_if_test_orientation_entered(page: Playwright, KAERS_ID: float) -> bool
 
 def get_program_type(page: Playwright) -> str:
     program_type = page.locator("#MainContent_lblProgramType").text_content()
-    print(f"Program type: {program_type}")
     return program_type
 
 
@@ -502,6 +520,13 @@ def run(playwright: Playwright) -> None:
             page.goto(f"https://kaers.ky.gov/StudentGeneral.aspx?student_record_id={KAERS_ID}")
             time.sleep(.25)
 
+
+            if last_name_is_in_full_name(page, LAST_NAME):
+                pass
+            else:
+                raise LastNameNotInKAERSProfileNameException
+            
+
             enroll_status = page.locator(f"[id=\"lblStatus\"]").inner_text()
             
             if enroll_status == 'GENERAL':
@@ -614,7 +639,7 @@ def run(playwright: Playwright) -> None:
                 time.sleep(.5)
                 if hours_after_entry_col_exists:
                     record_attend_hrs(page, current_row, KAERS_ID)
-                num_entered += 1
+                # num_entered += 1
             except PwTimeoutError:
                 if page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_customValidatorAttendDate\"]").is_visible():
                     enroll_date = page.locator("#MainContent_lblEnrollmentDate").inner_text()
@@ -622,7 +647,7 @@ def run(playwright: Playwright) -> None:
                     record_feedback(message=f'Date/time rejected | Enrolled: {enroll_date}', current_row=current_row)
                     if hours_after_entry_col_exists:
                         record_attend_hrs(page, current_row, KAERS_ID)
-                    num_date_time_rejected += 1
+                    # num_date_time_rejected += 1
                 else:
                     logging.warning(f"Error: Row {current_row + 1} - something went wrong")
                     record_feedback(message='Error: Something went wrong', current_row=current_row)
@@ -631,6 +656,11 @@ def run(playwright: Playwright) -> None:
         except exceptions.APIError as err:
             logging.error(f"{err} - Error: Row {current_row + 1} | Something went wrong on Google's end")
             record_feedback(message="Error: Something went wrong on Google's end", current_row=current_row)
+
+        
+        except LastNameNotInKAERSProfileNameException as err:
+            logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Maybe wrong student (last name not in profile)")
+            record_feedback(message='Skipped (wrong student? last name not in profile)', current_row=current_row)
 
 
         except TestOrientationAlreadyEnteredException as err:
@@ -666,6 +696,3 @@ def run(playwright: Playwright) -> None:
 
 with sync_playwright() as playwright:
     run(playwright)
-
-
-# process_finished_analysis(df)
