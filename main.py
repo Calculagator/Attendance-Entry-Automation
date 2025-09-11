@@ -100,7 +100,7 @@ class WelcomeWindow:
         self.url = self.google_sheet_url_entry.get()
         self.skip_close_to_12 = self.managed_attendance_check.get()
         # self.should_enter_test_orientation = self.enter_test_orientation_check.get()
-        print(f'Skip getting students past 12? -> {self.skip_close_to_12}')
+        print(f'Managed attendance? -> {self.skip_close_to_12}')
         # print(f'Enter test/orientation hours? -> {self.should_enter_test_orientation}')
 
     def fields_completed_check(self):
