@@ -24,8 +24,8 @@ class TestOrientationAlreadyEnteredException(Exception):
     """Raised if their test attendance hours (Orientation/Intake) has already been entered in KAERS."""
 
 
-class FirstNameNotInKAERSProfileNameException(Exception):
-    """Raised if student's first name isn't in the student's KAERS profile--implies
+class LastNameNotInKAERSProfileNameException(Exception):
+    """Raised if student's last name isn't in the student's KAERS profile--implies
     it's the wrong student (wrong ID on attendance sheet)."""
 
 
@@ -253,15 +253,13 @@ def get_split_name(page: Playwright) -> str:
     """Gets full name from student's KAERS profile page and returns a list containing
     each word in that full name in title (proper) case."""
     split_name = page.locator("#lblStudentName").text_content().title().split()
-    print(split_name)
     return split_name
 
 
-def first_name_is_in_full_name(page: Playwright, FIRST_NAME: str) -> bool:
-    """Checks if first word in first name is in KAERS profile name. Returns True or False."""
-    first_of_first_name = FIRST_NAME.title().split()[0]
-    print(first_of_first_name)
-    if first_of_first_name in get_split_name(page):
+def last_name_is_in_full_name(page: Playwright, LAST_NAME: str) -> bool:
+    """Checks if first word in last name is in KAERS profile name. Returns True or False."""
+    first_of_last_name = LAST_NAME.title().split()[0]
+    if first_of_last_name in get_split_name(page):
         return True
     else:
         return False
@@ -525,10 +523,10 @@ def run(playwright: Playwright) -> None:
             time.sleep(.25)
 
 
-            if first_name_is_in_full_name(page, FIRST_NAME):
+            if last_name_is_in_full_name(page, LAST_NAME):
                 pass
             else:
-                raise FirstNameNotInKAERSProfileNameException
+                raise LastNameNotInKAERSProfileNameException
             
 
             enroll_status = page.locator(f"[id=\"lblStatus\"]").inner_text()
@@ -662,7 +660,7 @@ def run(playwright: Playwright) -> None:
             record_feedback(message="Error: Something went wrong on Google's end", current_row=current_row)
 
         
-        except FirstNameNotInKAERSProfileNameException as err:
+        except LastNameNotInKAERSProfileNameException as err:
             logging.warning(f"{err} - Entry skipped: Row {current_row + 1} | Maybe wrong student (first name not in profile)")
             record_feedback(message='Skipped (wrong student? first name not in profile)', current_row=current_row)
 
