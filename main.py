@@ -60,12 +60,17 @@ class WelcomeWindow:
         self.spreadsheet_label.grid(row=5, column=1)
 
         self.google_sheet_url_entry = customtkinter.CTkEntry(master=frame, width=150, font=("Roboto", 13))
-        self.google_sheet_url_entry.grid(row=5, column=2)
+        self.google_sheet_url_entry.grid(row=5, column=2, pady=5)
 
         self.managed_attendance_check = customtkinter.BooleanVar(value=False)
         self.managed_attendance_checkbox = customtkinter.CTkCheckBox(master=frame, text="Managed attendance?", variable=self.managed_attendance_check,
                                                            onvalue=True, offvalue=False)
         self.managed_attendance_checkbox.grid(row=9, column=2, pady=5)
+
+        self.name_validation = customtkinter.BooleanVar(value=False)
+        self.name_validation_checkbox = customtkinter.CTkCheckBox(master=frame, text="Name check?", variable=self.name_validation,
+                                                           onvalue=True, offvalue=False)
+        self.name_validation_checkbox.grid(row=10, column=2, pady=5)
 
         # self.spreadsheet_label = customtkinter.CTkLabel(master=frame, text="Students to\nbypass 12 hr skip")
         # self.spreadsheet_label.grid(row=10, column=1)
@@ -99,8 +104,10 @@ class WelcomeWindow:
         self.attend_type = self.radio_state.get()
         self.url = self.google_sheet_url_entry.get()
         self.skip_close_to_12 = self.managed_attendance_check.get()
+        self.validate_name = self.name_validation.get()
         # self.should_enter_test_orientation = self.enter_test_orientation_check.get()
         print(f'Managed attendance? -> {self.skip_close_to_12}')
+        print(f'Check last name? -> {self.validate_name}')
         # print(f'Enter test/orientation hours? -> {self.should_enter_test_orientation}')
 
     def fields_completed_check(self):
@@ -522,11 +529,11 @@ def run(playwright: Playwright) -> None:
             page.goto(f"https://kaers.ky.gov/StudentGeneral.aspx?student_record_id={KAERS_ID}")
             time.sleep(.25)
 
-
-            if last_name_is_in_full_name(page, LAST_NAME):
-                pass
-            else:
-                raise LastNameNotInKAERSProfileNameException
+            if WelcWin.validate_name:
+                if last_name_is_in_full_name(page, LAST_NAME):
+                    pass
+                else:
+                    raise LastNameNotInKAERSProfileNameException
             
 
             enroll_status = page.locator(f"[id=\"lblStatus\"]").inner_text()
