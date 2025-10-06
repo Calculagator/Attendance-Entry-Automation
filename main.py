@@ -578,8 +578,8 @@ def run(playwright: Playwright) -> None:
                 if check_if_test_orientation_entered(page, KAERS_ID):
                     raise TestOrientationAlreadyEnteredException
 
-            if is_GED_Ready_No_Initial_Test(page) and would_get_over_12_hrs(page, KAERS_ID, current_row):
-                raise WouldGetOver12HoursException
+            # if is_GED_Ready_No_Initial_Test(page) and would_get_over_12_hrs(page, KAERS_ID, current_row):
+            #     raise WouldGetOver12HoursException
 
             if WelcWin.skip_close_to_12:
                 if would_get_over_12_hrs(page, KAERS_ID, current_row) and KAERS_ID not in MSG_student_list and add_participant_anyway:
