@@ -272,6 +272,21 @@ def last_name_is_in_full_name(page: Playwright, LAST_NAME: str) -> bool:
         return False
 
 
+def session_expired_check(page: Playwright, USERNAME: str, PASSWORD: str):
+    """Checks if session timed out. If so, tries to log back in."""
+    current_url = page.url
+    if "SessionExpired" in current_url:
+        #https://kaers.ky.gov/signin.aspx&SessionExpired=1
+        logging.warning(f"Session expired. Attempting to log back in.")
+        page.goto("https://kaers.ky.gov/SignIn.aspx")
+        page.locator("#rtxtUserName").click()
+        page.locator("#rtxtUserName").fill(USERNAME)
+        page.locator("#rtxtPassword").click()
+        page.locator("#rtxtPassword").fill(PASSWORD)
+        page.get_by_role("button", name="Sign in").click()
+        time.sleep(8)
+
+
 def get_enroll_status(page: Playwright, current_row) -> str:
     """Returns student's enrollment status from profile page.
        If not enrolled, records status."""
@@ -442,20 +457,11 @@ logging.info(f"\n\n~ {WelcWin.attend_type} Entry ~\n"
 
 starting_time = datetime.now().strftime("%H:%M")
 
-num_entered = 0
-num_date_time_rejected = 0
-num_timeout_errors = 0
-if WelcWin.skip_close_to_12:
-    num_skipped_close_to_12 = 0
-else:
-    num_skipped_close_to_12 = 'N/A'
-
 
 def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False, args=["--start-maximized"])
     context = browser.new_context(no_viewport=True)
     page = context.new_page()
-    global num_entered, num_date_time_rejected, num_timeout_errors, num_skipped_close_to_12
 
     non_MSG_participants_added = 0
 
@@ -481,11 +487,6 @@ def run(playwright: Playwright) -> None:
     for column in df['Row ID'].tolist():
 
         try:
-            #TODO: catch when session expires
-            # if "Session Expired" in url:
-                #log "Session expired"
-                #input("Session has expired. Please log into KAERS again and then push enter: ")
-
 
             KAERS_ID = df['KAERS ID'][current_row]
             FIRST_NAME = df['First Name'][current_row]
@@ -504,6 +505,7 @@ def run(playwright: Playwright) -> None:
                     logging.warning(f"Invalid ID: Row {current_row + 1}")
                     record_feedback(message='Invalid ID', current_row=current_row)
                     continue
+
 
             KAERS_ID = int(KAERS_ID)
 
@@ -529,10 +531,12 @@ def run(playwright: Playwright) -> None:
             page.goto(f"https://kaers.ky.gov/StudentGeneral.aspx?student_record_id={KAERS_ID}")
             time.sleep(.25)
 
+
+            session_expired_check(page, USERNAME, PASSWORD)
+
+
             if WelcWin.validate_name:
-                if last_name_is_in_full_name(page, LAST_NAME):
-                    pass
-                else:
+                if not last_name_is_in_full_name(page, LAST_NAME):
                     raise LastNameNotInKAERSProfileNameException
             
 
@@ -578,8 +582,8 @@ def run(playwright: Playwright) -> None:
                 if check_if_test_orientation_entered(page, KAERS_ID):
                     raise TestOrientationAlreadyEnteredException
 
-            # if is_GED_Ready_No_Initial_Test(page) and would_get_over_12_hrs(page, KAERS_ID, current_row):
-            #     raise WouldGetOver12HoursException
+            if is_GED_Ready_No_Initial_Test(page) and would_get_over_12_hrs(page, KAERS_ID, current_row):
+                raise WouldGetOver12HoursException
 
             if WelcWin.skip_close_to_12:
                 if would_get_over_12_hrs(page, KAERS_ID, current_row) and KAERS_ID not in MSG_student_list and add_participant_anyway:
@@ -686,7 +690,6 @@ def run(playwright: Playwright) -> None:
         except PwTimeoutError as err:
             logging.error(f"{err} - Entry failed: Row {current_row + 1}")
             record_feedback(message='Error: Something timed out', current_row=current_row)
-            num_timeout_errors += 1
 
 
         except ValueError as err:
