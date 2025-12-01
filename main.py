@@ -550,7 +550,7 @@ def run(playwright: Playwright) -> None:
             page.get_by_role("link", name="Tests").click()
             time.sleep(2)
             page.get_by_role("link", name="Enrollment").click()
-            time.sleep(3)
+            time.sleep(6)
 
             if enroll_status == 'SEPARATED':
                 try:
