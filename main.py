@@ -72,43 +72,19 @@ class WelcomeWindow:
                                                            onvalue=True, offvalue=False)
         self.name_validation_checkbox.grid(row=10, column=2, pady=5)
 
-        # self.spreadsheet_label = customtkinter.CTkLabel(master=frame, text="Students to\nbypass 12 hr skip")
-        # self.spreadsheet_label.grid(row=10, column=1)
-
-        # self.chosen_sheet_label = customtkinter.CTkLabel(master=frame, text="[file name will display here]")
-        # self.chosen_sheet_label.grid(row=10, column=2)
-
-        # self.choose_file_button = customtkinter.CTkButton(master=frame, width=100, text="Choose file",
-        #                                                   command=self.choose_file)
-        # self.choose_file_button.grid(row=10, column=3)
-
-        # self.enter_test_orientation_check = customtkinter.BooleanVar(value=False)
-        # self.enter_test_orientation_checkbox = customtkinter.CTkCheckBox(master=frame, text="Is this Orientation/Intake attendance?", variable=self.enter_test_orientation_check,
-        #                                                    onvalue=True, offvalue=False)
-        # self.enter_test_orientation_checkbox.grid(row=10, column=2, pady=5)
-
         self.next_button = customtkinter.CTkButton(master=frame, text="Next", font=("Roboto", 14),
                                                     command=self.fields_completed_check)
         self.next_button.grid(row=11, column=2, pady=20)
 
-    # def choose_file(self):
-    #     self.file_path = filedialog.askopenfilename(
-    #         initialdir="C:\\Users",
-    #         title="Choose a spreadsheet",
-    #         filetypes=(("Excel Files", "*.xlsx*"),))
-    #     if self.file_path:
-    #         self.file_name = os.path.basename(self.file_path)
-    #         self.chosen_sheet_label.configure(text=f"{self.file_name}")
 
     def get_entries(self):
         self.attend_type = self.radio_state.get()
         self.url = self.google_sheet_url_entry.get()
         self.skip_close_to_12 = self.managed_attendance_check.get()
         self.validate_name = self.name_validation.get()
-        # self.should_enter_test_orientation = self.enter_test_orientation_check.get()
         print(f'Managed attendance? -> {self.skip_close_to_12}')
         print(f'Check last name? -> {self.validate_name}')
-        # print(f'Enter test/orientation hours? -> {self.should_enter_test_orientation}')
+
 
     def fields_completed_check(self):
         """If any field is empty, gives a messagebox. If all fields are filled, gathers user's selections and closes window."""
@@ -199,61 +175,11 @@ def on_close():
         sys.exit()
 
 
-# def estimate_completion_time(df):
-#     num_of_entries = df['KAERS ID'].count()
-#     print("Num of entries: ", num_of_entries)
-#     rate = 120
-#     estimated_time = (num_of_entries - WelcWin.row_start + 1) / rate
-
-#     if estimated_time < 1:
-#         hours = 0
-#         minutes = 60 * (estimated_time % 1)
-#     else:
-#         hours = estimated_time
-#         minutes = 60 * (hours % 1)
-
-#     add_time = timedelta(hours=hours, minutes=minutes)
-#     estimate_finish_time = (datetime.now() + add_time).strftime("%H:%M")
-
-#     yes_no_box = tkinter.messagebox.askyesno(title="Estimated Time",
-#                                              message=f"This process is estimated to finish at {estimate_finish_time}.\n\n"
-#                                                      f"Start the program?")
-#     if not yes_no_box:
-#         sys.exit()
-
-#     return estimate_finish_time
-
 
 def record_feedback(message: str, current_row: int):
     """Writes message parameter in 'entered?' column."""
     ws.update_cell(current_row + 2, ENTERED_COLUMN, f'{message}')
 
-
-def tab_exists(title: str) -> bool:
-    tab_exists: bool = wb.worksheet(title)
-    return tab_exists
-
-
-def create_tab(title: str, rows: int, cols: int):
-    if tab_exists(title):
-        print(f'A tab named {title} already exists.')
-    else:
-        wb.add_worksheet(title=title, rows=rows, cols=cols)
-        print(f'Successfully created tab named {title}.')
-
-
-def create_log(log_path: str) -> str:
-    """Creates log with version number to prevent overwriting logs."""
-    log_exists = os.path.isfile(log_path)
-    version_number = 2
-
-    while log_exists:
-        log_path = log_path.replace(f" ver{str(version_number - 1)}", "")
-        log_path = log_path + " ver" + str(version_number)
-        version_number += 1
-        log_exists = os.path.isfile(log_path)
-
-    return log_path
 
 
 def get_split_name(page: Playwright) -> str:
@@ -371,15 +297,6 @@ def record_attend_hrs(page: Playwright, current_row: int, KAERS_ID: float):
     ws.update_cell(current_row + 2, HOURS_AFTER_ENTRY_COLUMN, f'{current_attend_hours}')
 
 
-# def process_finished_analysis(df: pd.DataFrame):
-#     """Logs automation's performance data such as number of rows entered, errors, etc."""
-#     global num_entered, num_date_time_rejected, num_timeout_errors, num_skipped_close_to_12
-#     total_rows = df['KAERS ID'].count()
-#     num_rows_attempted = total_rows - WelcWin.row_start
-
-#     logging.info(f"\nAttendance entry complete - Rows entered: {num_entered} | Rows attempted: {num_rows_attempted}\n"
-#                  f"Date/Time rejected: {num_date_time_rejected} | Timeout errors: {num_timeout_errors} | Skipped over 12 hrs: {num_skipped_close_to_12}")
-
 
 # Opens Welcome Window: user selects attendance type, enters Google Sheet url, row ID to start on, and whether to skip getting students above 12 hrs
 window = CTk()
@@ -430,8 +347,6 @@ window.mainloop()
 
 log_path = f"logs/{wb.title.replace('/', '.')} _ {sheet_window.ws.replace('/', '.')}.log"
 
-# log_path = create_log(log_path)
-
 
 logging.basicConfig(level=logging.INFO, filename=log_path, filemode='a',
                     format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
@@ -440,7 +355,6 @@ ws = wb.worksheet(f"{sheet_window.ws}")
 df = pd.DataFrame(ws.get_all_records())
 df = df.replace('', None)
 df = df.replace('#N/A', None)
-# idx = df.columns.get_loc("entered?")
 ENTERED_COLUMN = df.columns.get_loc("entered?") + 1
 try:
     HOURS_AFTER_ENTRY_COLUMN = df.columns.get_loc("Hours after entry") + 1
@@ -448,14 +362,11 @@ try:
 except KeyError:
     hours_after_entry_col_exists = False
 
-# estimated_finish_time = estimate_completion_time(df)
 
 logging.info(f"\n\n~ {WelcWin.attend_type} Entry ~\n"
              f"File chosen: {wb.title}\n"
              f"Skip rows that get above 12 hours: {WelcWin.skip_close_to_12}\n")
             #  f"Estimated finish time - {estimated_finish_time}\n")
-
-starting_time = datetime.now().strftime("%H:%M")
 
 
 def run(playwright: Playwright) -> None:
@@ -497,6 +408,9 @@ def run(playwright: Playwright) -> None:
             else:
                 add_participant_anyway = False
 
+            # checks if ID is valid
+            # if invalid, checks if first and last name are blank; if blank, loop ends
+            # if ID invalid but first and last name are there, writes 'Invalid ID' on Google Sheet and moves to next row
             if pd.isna(df['KAERS ID'][current_row]) or len(str(KAERS_ID)) != 7:
                 if pd.isna(FIRST_NAME) and pd.isna(LAST_NAME):
                     logging.info(f'Blank row found. Program stopped. Row {current_row}\n')
@@ -509,39 +423,35 @@ def run(playwright: Playwright) -> None:
 
             KAERS_ID = int(KAERS_ID)
 
-
+            # checks if row has already been entered
             entered_cell = str(df['entered?'][current_row])
             if entered_cell == '✅' or entered_cell == '✔️' or entered_cell == 'YES':
                 logging.info(f"Skipped: Row {current_row + 1} - Entry already entered. Status is: {entered_cell}")
                 continue
 
-
+            # checks if DL Total Time is 0 (data is invalid)
             if WelcWin.attend_type == "Distance Learning":
                 if df['Total Time'][current_row] == 0:
                     logging.info(f"Skipped (time = 0): Row {current_row + 1}")
                     record_feedback(message='Skipped (time = 0)', current_row=current_row)
                     continue
 
-            
-            # if str(KAERS_ID) in separated_list:
-            #     logging.warning(f"SEPARATED (skipped): Row {current_row + 1}")
-            #     record_feedback(message='Separated (skipped)', current_row=current_row)
-            #     continue
            
             page.goto(f"https://kaers.ky.gov/StudentGeneral.aspx?student_record_id={KAERS_ID}")
             time.sleep(.25)
 
-
+            # checks if session has expired; if so, logs back in
             session_expired_check(page, USERNAME, PASSWORD)
 
-
+            # if user selected Name Check checkbox, checks if student's last name is in KAERS profile
+            # if last name not in profile, raises exception
             if WelcWin.validate_name:
                 if not last_name_is_in_full_name(page, LAST_NAME):
                     raise LastNameNotInKAERSProfileNameException
             
 
+            # if student's status is 'General', records status on Google Sheet and skips entry
             enroll_status = page.locator(f"[id=\"lblStatus\"]").inner_text()
-            
             if enroll_status == 'GENERAL':
                 logging.warning(f"{enroll_status}: Row {current_row + 1}")
                 record_feedback(message=f'{enroll_status}', current_row=current_row)
@@ -552,6 +462,7 @@ def run(playwright: Playwright) -> None:
             page.get_by_role("link", name="Enrollment").click()
             time.sleep(6)
 
+            # if student is separated, attempts to un-separate (clicks Edit Enrollment (pencil button), then Enrollment tab, then unchecks 'Released' box, then clicks Update)
             if enroll_status == 'SEPARATED':
                 try:
                     logging.info(f"Row {current_row + 1} - Attempting to un-separate")
@@ -562,35 +473,35 @@ def run(playwright: Playwright) -> None:
                     record_feedback(message=f'{enroll_status} - could not un-separate', current_row=current_row)
                     continue
 
-            # try:
-            #     page.get_by_text("This client is not enrolled in your location. Contact the enrollment location fo").click(timeout=2000)
-            #     logging.warning(f"Row {current_row +1} - enrolled somewhere else")
-            #     record_feedback(message='Error: Enrolled somewhere else', current_row=current_row)
-            #     continue
-            # except PwTimeoutError:
-            #     pass
-
+            # clicks Attendance tab
             page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=20000)
             time.sleep(1)
 
+            # if message about student being enrolled at different location is displayed, records "enrolled somewhere else" on Google Sheet and skips entry
             if page.get_by_text("This client is not enrolled in your location. Contact the enrollment location fo").is_visible():
                 logging.warning(f"Row {current_row +1} - enrolled somewhere else")
                 record_feedback(message='Error: Enrolled somewhere else', current_row=current_row)
                 continue
-
+            
+            # checks if orientation has already been entered
             if WelcWin.attend_type == 'Orientation/Intake':
                 if check_if_test_orientation_entered(page, KAERS_ID):
                     raise TestOrientationAlreadyEnteredException
 
+            # checks if program type is No Initial Test and if entry would get student over 12 hours
+            # if so, raises exception (entry would cause student to be a level 99)
             if is_GED_Ready_No_Initial_Test(page) and would_get_over_12_hrs(page, KAERS_ID, current_row):
                 raise WouldGetOver12HoursException
 
+            # if student not on MSG list, would get over 12 hours, but user chose to add anyway: adds entry
+            # if user did NOT choose to add anyway, raises exception
             if WelcWin.skip_close_to_12:
                 if would_get_over_12_hrs(page, KAERS_ID, current_row) and KAERS_ID not in MSG_student_list and add_participant_anyway:
                     pass
                 elif would_get_over_12_hrs(page, KAERS_ID, current_row) and KAERS_ID not in MSG_student_list:
                     raise WouldGetOver12HoursException
 
+            # selects attendance type
             attendance_type = str.title(df['Attendance Type'][current_row])
             attendance_date = str(df['Attendance Date'][current_row])
             page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendType_Arrow\"]").click()
@@ -600,6 +511,7 @@ def run(playwright: Playwright) -> None:
             page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=3000)
             time.sleep(1)
            
+            # fills attendance info based on Attendance Type
             if WelcWin.attend_type == "Live Attendance" or WelcWin.attend_type == "Orientation/Intake":
                 start_time = str(df['Start Time'][current_row])
                 end_time = str(df['End Time'][current_row])
@@ -607,7 +519,7 @@ def run(playwright: Playwright) -> None:
                 page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rtpStartTime_dateInput\"]").fill(start_time)
                 page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rtpEndTime_dateInput\"]").click()
                 page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rtpEndTime_dateInput\"]").fill(end_time)
-            else:
+            else: # is Distance Learning
                 product = str(df['Product'][current_row])
                 total_time = str(df['Total Time'][current_row])
                 page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbProducts_Arrow\"]").click()
@@ -627,6 +539,7 @@ def run(playwright: Playwright) -> None:
             #         continue
             # page.get_by_role("cell", name="Approve :", exact=True).click()
 
+
             # if adding non-MSG student, colors pink
             # if adding MSG student, colors green
             if hours_after_entry_col_exists and would_get_over_12_hrs(page, KAERS_ID, current_row) and add_participant_anyway and KAERS_ID not in MSG_student_list:
@@ -644,6 +557,7 @@ def run(playwright: Playwright) -> None:
             page.get_by_role("button", name="Save").click()
             time.sleep(1)
 
+            # checks if entry was successful; if not, checks if date/time was rejected; if not, logs error
             try:
                 page.get_by_text("Attendance has been Saved.").click()
                 logging.info(f"Successfully entered: Row {current_row + 1}")
