@@ -462,8 +462,7 @@ def run(playwright: Playwright) -> None:
             page.get_by_role("link", name="Enrollment").click()
             time.sleep(6)
 
-            # if student is separated, attempts to un-separate (clicks Edit Enrollment (pencil button), 
-            # then Enrollment tab, then unchecks 'Released' box, then clicks Update)
+            # if student is separated, attempts to un-separate (clicks Edit Enrollment (pencil button), then Enrollment tab, then unchecks 'Released' box, then clicks Update)
             if enroll_status == 'SEPARATED':
                 try:
                     logging.info(f"Row {current_row + 1} - Attempting to un-separate")
@@ -478,8 +477,7 @@ def run(playwright: Playwright) -> None:
             page.locator("#ctl00_MainContent_RadTabStripEnrollmentVerticalTab").get_by_role("link", name="Attendance").click(timeout=20000)
             time.sleep(1)
 
-            # if message about student being enrolled at different location is displayed,
-            # records "enrolled somewhere else" on Google Sheet and skips entry
+            # if message about student being enrolled at different location is displayed, records "enrolled somewhere else" on Google Sheet and skips entry
             if page.get_by_text("This client is not enrolled in your location. Contact the enrollment location fo").is_visible():
                 logging.warning(f"Row {current_row +1} - enrolled somewhere else")
                 record_feedback(message='Error: Enrolled somewhere else', current_row=current_row)
@@ -530,6 +528,17 @@ def run(playwright: Playwright) -> None:
                 page.get_by_role("textbox", name="Total time should not be more than 20 hours!").click()
                 page.get_by_role("textbox", name="Total time should not be more than 20 hours!").fill(total_time)
 
+            # if pd.notna(df['Site'][current_row]):
+            #     site = str(df['Site'][current_row])
+            #     page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendSite_Arrow\"]").click()
+            #     try:
+            #         page.locator(f"[id=\"ctl00_MainContent_Attendance_userControl\\?{KAERS_ID}_rcbAttendSite_DropDown\"]").get_by_text(site).click()
+            #     except PwTimeoutError:
+            #         logging.warning(f"Enrolled somewhere else? Row {current_row + 1}")
+            #         record_feedback(message="Error: Enrolled somewhere else?", current_row=current_row)
+            #         continue
+            # page.get_by_role("cell", name="Approve :", exact=True).click()
+
 
             # if adding non-MSG student, colors pink
             # if adding MSG student, colors green
@@ -557,6 +566,7 @@ def run(playwright: Playwright) -> None:
                 time.sleep(.5)
                 if hours_after_entry_col_exists:
                     record_attend_hrs(page, current_row, KAERS_ID)
+                # num_entered += 1
             except PwTimeoutError:
                 if page.locator(f"[id=\"MainContent_Attendance_userControl\\?{KAERS_ID}_customValidatorAttendDate\"]").is_visible():
                     enroll_date = page.locator("#MainContent_lblEnrollmentDate").inner_text()
@@ -564,6 +574,7 @@ def run(playwright: Playwright) -> None:
                     record_feedback(message=f'Date/time rejected | Enrolled: {enroll_date}', current_row=current_row)
                     if hours_after_entry_col_exists:
                         record_attend_hrs(page, current_row, KAERS_ID)
+                    # num_date_time_rejected += 1
                 else:
                     logging.warning(f"Error: Row {current_row + 1} - something went wrong")
                     record_feedback(message='Error: Something went wrong', current_row=current_row)
