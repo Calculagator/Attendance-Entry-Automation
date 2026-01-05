@@ -39,6 +39,7 @@ class RunOptions:
     validate_name: bool = False
     msg_student_ids: Optional[Sequence[int]] = None
     desired_participants_to_add: int = 0
+    headless_mode: bool = False
 
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -89,7 +90,9 @@ def run_attendance(options: RunOptions, credentials_path: str = "credentials.jso
     msg_student_ids = set(map(int, options.msg_student_ids or []))
 
     def run(playwright: Playwright) -> None:
-        browser = playwright.chromium.launch(headless=False, args=["--start-maximized"])
+        browser = playwright.chromium.launch(
+            headless=options.headless_mode, args=["--start-maximized"]
+        )
         context = browser.new_context(no_viewport=True)
         page = context.new_page()
 

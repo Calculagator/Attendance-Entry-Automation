@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>Attendance Configuration</h2>
+
+    <!-- Step 1: Sheet Loader -->
+    <form action="{{ url_for('dashboard') }}" method="get" class="form-group"
+        style="padding-bottom: 20px; border-bottom: 1px solid var(--border);">
+        <label for="sheet_url">1. Google Sheet URL</label>
+        <div class="flex-row">
+            <input type="text" id="sheet_url" name="sheet_url" value="{{ sheet_url }}"
+                placeholder="https://docs.google.com/spreadsheets/d/..." required>
+            <button type="submit" class="btn" style="width: auto;">Load Tabs</button>
+        </div>
+    </form>
+
+    <!-- Step 2: Main Form -->
+    <form action="{{ url_for('perform_attendance') }}" method="post">
+        <!-- Hidden field to keep the URL -->
+        <input type="hidden" name="sheet_url" value="{{ sheet_url }}">
+
+        <div class="form-group">
+            <label for="attend_type">Attendance Type</label>
+            <select name="attend_type" id="attend_type">
+                <option value="Live Attendance">Live Attendance</option>
+                <option value="Distance Learning/Online Self-Study">Distance Learning/Online Self-Study</option>
+                <option value="Orientation/Intake">Orientation/Intake</option>
+                <option value="CCN - Personal Contact">CCN - Personal Contact</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="worksheet_title">Worksheet Tab</label>
+            <select name="worksheet_title" id="worksheet_title" {% if not tabs %}disabled{% endif %}>
+                {% if not tabs %}
+                <option>Load URL first...</option>
+                {% else %}
+                {% for tab in tabs %}
+                <option value="{{ tab }}">{{ tab }}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="row_start_index">Start Row (Sheet ID)</label>
+            <input type="number" name="row_start_index" id="row_start_index" value="1" min="1">
+        </div>
+
+        <div class="flex-row form-group">
+            <div class="checkbox-wrapper col">
+                <input type="checkbox" id="managed_attendance" name="managed_attendance">
+                <label for="managed_attendance">Managed Attendance (Skip > 12h)</label>
+            </div>
+            <div class="checkbox-wrapper col">
+                <input type="checkbox" id="validate_name" name="validate_name">
+                <label for="validate_name">Validate Name in KAERS</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="desired_participants">Add Participants over 12h (Optional Count)</label>
+            <input type="number" name="desired_participants" id="desired_participants" value="0" min="0">
+        </div>
+
+        <div style="margin-top: 30px;">
+            <button type="submit" class="btn" {% if not tabs %}disabled style="opacity: 0.5;" {% endif %}>🚀 Start
+                Automation</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
